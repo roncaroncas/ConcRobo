@@ -3,11 +3,10 @@ import socket
 from time import sleep
 import pygame
 
-
 # CONFIGURACOES GERAIS
 
 #
-PRINT = True
+PRINT = False
 DELAY = False
 
 ### PROTOCOLO (HEADCHAR, ENDCHAR)
@@ -114,7 +113,7 @@ class GUI:
 
 		#definindo a surface
 		pygame.display.set_caption('Robo')
-		self.screen = pygame.display.set_mode((100,100))
+		self.screen = pygame.display.set_mode((300,600))
 
 		#definindo o periodo de repetição de key_down
 		pygame.key.set_repeat(1)
@@ -124,11 +123,30 @@ class GUI:
 
 		#definindo a cor de fundo
 		self.screen.fill([220,220,220])
+		
+		imgNames = [
+			'N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO', 'STOP',
+			'angleX', 'angleY',		
+					]
+		self.img      = {
+                name: pygame.image.load("./img/{}.jpeg".format(name)).convert()
+                for name in imgNames
+                }
+		
+		#setting transparency
+		for name in self.img:
+			self.img[name].set_colorkey((255,0,255))
+		
+		#print(self.img)
+		#input()
+				
+		self.movePos = [50,50]
 
 		#atualizando as imagens
 		pygame.display.update()
 
 	def getKey(self): #Gets if any key is pressed and what key
+	
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				#TODO:
@@ -142,25 +160,86 @@ class GUI:
 				return (True, int(event.key))
 		return (False, 0)
 
+	def drawMove(self, move, update=True):
+		movePos = [50,50]
+	
+		moveImg = self.img[move]
+		moveRect = moveImg.get_rect(center=movePos)
+		self.screen.blit(moveImg, moveRect)
+		
+		if update:
+			pygame.display.update()
+			
+	def drawAngleX(self, angleX, update=True):
+		angleXPos = [75, 200]
+		angleXImg = pygame.transform.rotate(self.img['angleX'],angleX)
+		
+		angleXRect = angleXImg.get_rect(center=angleXPos)
+		self.screen.blit(angleXImg, angleXRect)
+		if update:
+			pygame.display.update()
+		
+		
+	def drawAngleY(self, angleY, update=True):
+		angleYPos = [225, 200]
+		angleYImg =  pygame.transform.rotate(self.img['angleY'],angleY)
+		angleYRect = angleYImg.get_rect(center=angleYPos)
+		self.screen.blit(angleYImg, angleYRect)
+		if update:
+			pygame.display.update()
+		pass
+	
+	
+	def update(self,database):
+	
+		#self.screen.fill([220,220,220])
+		
+		#Updating move:
+		self.drawMove(database.db['move']['value'],True)
+		
+		#Updating move:
+		angleX = database.db['Accel.x']['value']*90.0
+		self.drawAngleX(angleX,True)
+		
+		#Updating move:
+		angleY = database.db['Accel.y']['value']*90.0
+		self.drawAngleY(angleY,True)
+		
+		print(angleX, angleY)
+				
+		#pygame.display.update()
+		
+		
 class DataBase():
 	def __init__(self):
 		self.db = {
-					b'\x00': {'name': 'N', 		'value': 0},
-					b'\x01': {'name': 'NE', 		'value': 0},
-					b'\x02': {'name': 'E', 		'value': 0},
-					b'\x03': {'name': 'SE', 		'value': 0},
-					b'\x04': {'name': 'S', 		'value': 0},
-					b'\x05': {'name': 'SO', 		'value': 0},
-					b'\x06': {'name': 'O', 		'value': 0},
-					b'\x07': {'name': 'NO', 		'value': 0},
-					b'\x08': {'name': 'STOP',	'value': 0},
-					b'\x10': {'name': 'Accel.x', 'value': 0},
-					b'\x11': {'name': 'Accel.y', 'value': 0},
-					b'\x12': {'name': 'Accel.z', 'value': 0},
-					b'\x13': {'name': '?', 		'value': 0},
-					b'\x14': {'name': '?', 		'value': 0},
-					b'\x15': {'name': '?', 		'value': 0},
+					'move' : {'value': 'STOP'},
+					'Accel.x': {'value': 0}, #b'\x10'
+					'Accel.y': {'value': 0}, #b'\x11'
+					'Accel.z': {'value': 0}, #b'\x12'
+					'?':	{},
 					}
+					
+		self.indMap = {
+				b'\x00': {'func': 'move',	'value':'N'} ,
+				b'\x01': {'func': 'move',	'value':'NE'} ,
+				b'\x02': {'func': 'move',	'value':'E'} ,
+				b'\x03': {'func': 'move',	'value':'SE'} ,
+				b'\x04': {'func': 'move',	'value':'S'} ,
+				b'\x05': {'func': 'move',	'value':'SO'} ,
+				b'\x06': {'func': 'move',	'value':'O'} ,
+				b'\x07': {'func': 'move',	'value':'NO'} ,
+				b'\x08': {'func': 'move',	'value':'STOP'} ,	
+				
+				b'\x10': {'func': 'Accel.x'},			
+				b'\x11': {'func': 'Accel.y'},			
+				b'\x12': {'func': 'Accel.z'},			
+				b'\x13': {'func': '?'},			
+				b'\x14': {'func': '?'},			
+				b'\x15': {'func': '?'},
+				
+				b'\x20': {'func': '?'},
+			}
 
 	def __str__(self):
 		s = 'DataBase:\n' 
@@ -170,8 +249,16 @@ class DataBase():
 		return s
 		
 	def store(self, indice, value):
+		#print(indice, value)
+		func = self.indMap[indice]['func']
+		if func == 'move':
+			value = self.indMap[indice]['value']
+		elif func == 'Accel.x' or func == 'Accel.y' or func == 'Accel.z':
+			value = (int.from_bytes(value,'big') - 2048)/1024.0
+			#rounding:
+			value = int(30*value)/30
+		self.db[func]['value'] = value
 		print(self)
-		self.db[indice]['value'] = value
 
 		
 ######################	NETWORK	 #################
@@ -182,6 +269,7 @@ class Ethernet():
 		self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 		print('Connecting to {}:{} ...'.format(IP,PORT))
+		self.sock.settimeout(5)
 		self.sock.connect((IP, PORT))
 		print('Connected')
 
@@ -226,8 +314,6 @@ class Serial():
 		return ser.readline()
 
 #####################  /NETWORK	 #################
-
-
 
 
 class Client():
@@ -359,6 +445,8 @@ class Client():
 
 		while (cont):
 
+			self.gui.update(self.db)
+			
 			#getMsg (inputs -> msg)
 			self.getMsg()
 

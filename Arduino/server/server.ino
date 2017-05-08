@@ -1,6 +1,3 @@
-// TODO. GET ANALOGIC RESPONSE.
-
-
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Wire.h> // Must include Wire library for I2C
@@ -25,7 +22,7 @@ boolean newResp = false;
 //Control Variables
 byte lastOrder = 0x08;
 int deltaTime = 100; //milliseconds
-unsigned long tLim;
+unsigned long tLim = 1000000000;
 unsigned long tic;
 
 //Message variables
@@ -52,20 +49,19 @@ int pinRelD = 7;
 
 void setup() {
 
-
+  
+  // Inicializando serial
+  Serial.begin(9600); // Debugging
+  Serial.println("Init...");
 
   // Inicializando internet
   Ethernet.begin(mac, ip, gateway, subnet); // initialize Ethernet device
   server.begin();           // start to listen for clients
-
-  // Inicializando serial
-  Serial.begin(9600); // Debugging
-
-
-  Serial.println("Init...");
+  Serial.println("Server ready");
 
   // Inicializando acelerometro
   accel.init();
+  Serial.println("Accelerometer ready");
 
   // Inicializando pinos do relé
   //Pinos do relé
@@ -73,6 +69,7 @@ void setup() {
   pinMode(pinRelB, OUTPUT);
   pinMode(pinRelC, OUTPUT);
   pinMode(pinRelD, OUTPUT);
+  Serial.println("Relays ready");
 
 
   //Pinos analógicos ??
@@ -88,7 +85,6 @@ void setup() {
   Serial.println("Setup Ready");
   Serial.print("IP: ");
   Serial.println(Ethernet.localIP());
-
 }
 
 //FUNCAO PRINCIPAL QUE CONTROLA O FLUXO DO PROGRAMA (SEGUE POWER POINT)
@@ -115,7 +111,6 @@ void loop() {
   }
 
   keepMoving(); //verifica a partir das variaveis de controle e do timeLeft se ja devem parar
-
 }
 
 
@@ -273,7 +268,9 @@ void getAnalogicResp() {
 void sendResponse() {
 
   //TODO, DESCOBRIR COMO COMPACTAR ISSO A BAIXO SEM AUMENTAR O LAG
-  tic = millis();
+  //tic = millis();
+
+  //server.write(resp,7);
   server.write(resp[0]);
   server.write(resp[1]);
   server.write(resp[2]);
