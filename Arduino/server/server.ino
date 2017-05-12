@@ -2,10 +2,13 @@
 #include <Ethernet.h>
 #include <Wire.h> // Must include Wire library for I2C
 #include <SFE_MMA8452Q.h> // Includes the SFE_MMA8452Q library
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
 
 // Network
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-byte ip[] = { 169, 254, 104, 100 };
+//byte ip[] = { 169, 254, 104, 100 };
+byte ip[] = {192, 168, 0, 120};
 byte gateway[] = { 192, 168, 0 , 1};
 byte subnet[] = { 255, 255, 255, 0 };
 
@@ -15,13 +18,16 @@ EthernetClient client;
 //Accelerometer
 MMA8452Q accel;
 
+//Pressao e Temperatura
+Adafruit_BMP280 bmp; // I2C
+
 // Flux Control Variables
 boolean newMsg = false;
 boolean newResp = false;
 
 //Control Variables
 byte lastOrder = 0x08;
-int deltaTime = 100; //milliseconds
+int deltaTime = 1000; //milliseconds
 unsigned long tLim = 1000000000;
 unsigned long tic;
 
@@ -49,7 +55,7 @@ int pinRelD = 7;
 
 void setup() {
 
-  
+
   // Inicializando serial
   Serial.begin(9600); // Debugging
   Serial.println("Init...");
@@ -62,6 +68,11 @@ void setup() {
   // Inicializando acelerometro
   accel.init();
   Serial.println("Accelerometer ready");
+
+  if (!bmp.begin()){
+    Serial.println("BMP Failed");
+  }
+  Serial.println("BMP ready");
 
   // Inicializando pinos do relé
   //Pinos do relé
@@ -234,19 +245,48 @@ void getAnalogicResp() {
 
 
 
-    // 0x13, 0x14, 0x15:
-      case 0x13:
-      case 0x14:
-      case 0x15:
-        val1 = 0xFF;
-        val2 = 0xFF;
-        break;
-        
-     
-        val1 = 0xFF;
-        val2 = 0xFF;
-        
+    // 0x13: Temperature
+    case 0x13:
+      //Precisao de 0.1ºC
+      // value = 0    equivale a    Temperatura =   0 ºC
+      // value = 1    equivale a    Temperatura = 0.1 ºC
+      
+      value = int(bmp.readTemperature()*10);
+      val1 = byte(value / 256);
+      val2 = byte(value % 256);
+      
+      Serial.print("Temperature = ");
+      Serial.print(bmp.readTemperature());
+      Serial.println(" *C");
+      Serial.print("Val: ");
+      Serial.println(String(val1) + " " + String(val2));
+      Serial.println();
+      break;
 
+    //0x14: Pressure
+    case 0x14:
+      // Precisao de 100 Pa,,, max possivel: 2mca, min: 0
+      // value = 0    equivale a    Pressão =   0 Pa
+      // value = 1    equivale a    Pressão = 100 Pa
+    
+      value = int(bmp.readPressure()/100);
+      val1 = byte(value / 256);
+      val2 = byte(value % 256);
+      
+      Serial.print("Pressure = ");
+      Serial.print(bmp.readPressure());
+      Serial.println(" Pa");
+      Serial.print("Val: ");
+      Serial.println(String(val1) + " " + String(val2));
+      
+      Serial.println();
+      break;
+
+    //0x15: ?
+    case 0x15:
+      val1 = 0xFF;
+      val2 = 0xFF;
+      break;
   }
 
   //HEAD

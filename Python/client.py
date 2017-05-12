@@ -2,6 +2,7 @@ import serial
 import socket
 from time import sleep
 import pygame
+import math
 
 # CONFIGURACOES GERAIS
 
@@ -18,7 +19,8 @@ ETHERNET = True		#True: via Ethernet, False: via Serial
 
 ###ETHERNET: (IP, PORT)
 ######ARDUINO:
-IP = "169.254.104.100"
+#IP = "169.254.104.100"
+IP = "192.168.0.120"
 PORT = 23
 #####LOCAL:
 #IP = "127.0.0.1"
@@ -195,71 +197,136 @@ class GUI:
 		#self.screen.fill([220,220,220])
 		
 		#Updating move:
-		self.drawMove(database.db['move']['value'],True)
+		self.drawMove(database.resultDb['lastMove'],False)
 		
 		#Updating move:
-		angleX = database.db['Accel.x']['value']*90.0
-		self.drawAngleX(angleX,True)
+		#angleX = database.db['Accel.x']['value']*90.0
+		angleX = database.resultDb['angleX']
+		self.drawAngleX(angleX,False)
 		
 		#Updating move:
-		angleY = database.db['Accel.y']['value']*90.0
+		#angleY = database.db['Accel.y']['value']*90.0
+		angleY = database.resultDb['angleY']
 		self.drawAngleY(angleY,True)
 		
-		print(angleX, angleY)
+		#print(angleX, angleY)
 				
 		#pygame.display.update()
 		
 		
 class DataBase():
 	def __init__(self):
-		self.db = {
-					'move' : {'value': 'STOP'},
-					'Accel.x': {'value': 0}, #b'\x10'
-					'Accel.y': {'value': 0}, #b'\x11'
-					'Accel.z': {'value': 0}, #b'\x12'
-					'?':	{},
-					}
+	
+		# self.db = {
+					# 'move' : {'value': 'STOP'},
+					# 'Accel.x': {'value': ""}, #b'\x10'
+					# 'Accel.y': {'value': ""}, #b'\x11'
+					# 'Accel.z': {'value': ""}, #b'\x12'
+					# 'Temperatura': {'value': ""}, #b'\x13'
+					# 'Pressao': {'value': ""}, #b'\x14'
 					
-		self.indMap = {
-				b'\x00': {'func': 'move',	'value':'N'} ,
-				b'\x01': {'func': 'move',	'value':'NE'} ,
-				b'\x02': {'func': 'move',	'value':'E'} ,
-				b'\x03': {'func': 'move',	'value':'SE'} ,
-				b'\x04': {'func': 'move',	'value':'S'} ,
-				b'\x05': {'func': 'move',	'value':'SO'} ,
-				b'\x06': {'func': 'move',	'value':'O'} ,
-				b'\x07': {'func': 'move',	'value':'NO'} ,
-				b'\x08': {'func': 'move',	'value':'STOP'} ,	
+					# '?':	{},
+					# }
 				
-				b'\x10': {'func': 'Accel.x'},			
-				b'\x11': {'func': 'Accel.y'},			
-				b'\x12': {'func': 'Accel.z'},			
-				b'\x13': {'func': '?'},			
-				b'\x14': {'func': '?'},			
-				b'\x15': {'func': '?'},
+					
+					
+		self.db = {
+				#value = constant
+				b'\x00': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'N'		,'A': 0., 'B': 0.,} ,
+				b'\x01': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NE'	,'A': 0., 'B': 0.,} ,
+				b'\x02': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'E'		,'A': 0., 'B': 0.,} ,
+				b'\x03': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SE'	,'A': 0., 'B': 0.,} ,
+				b'\x04': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'S'		,'A': 0., 'B': 0.,} ,
+				b'\x05': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SO'	,'A': 0., 'B': 0.,} ,
+				b'\x06': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'O'		,'A': 0., 'B': 0.,} ,
+				b'\x07': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NO'	,'A': 0., 'B': 0.,} ,
+				b'\x08': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'STOP'	,'A': 0., 'B': 0.,} ,	
 				
-				b'\x20': {'func': '?'},
+				#value = A*valueInByte + B 
+				b'\x10': {'type': 'Accel.x',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},			
+				b'\x11': {'type': 'Accel.y',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},		
+				b'\x12': {'type': 'Accel.z',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},	
+				
+				b'\x13': {'type': 'Temperatura',	'valueInByte': b'\x00\x00',	'value': -1		,'A': 0.1, 'B': 0.,},			
+				b'\x14': {'type': 'Pressão',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 100., 'B': 0.,},
+				
+				b'\x15': {'type': '?',				'valueInByte': b'\x00\x00',	'value': -1		,'A': 0., 'B': 0.,},
+				
+				b'\x20': {'type': '?',				'valueInByte': b'\xff\xff',	'value': -1		,'A': 0., 'B': 0.,},	
 			}
+			
+		self.resultDb = {
+				'lastMove': 	"STOP",		# String
+				'angleX' : 		0,			# º
+				'angleY' : 		0,			# º
+				'temperature': 	25.0, 		# ºC
+				'pressao': 		10000, 		# Pa
+		}
 
 	def __str__(self):
+	
+		#s = 'DataBase:\n' 
+		#for indice in self.db:
+		#	value = self.db[indice]
+		#	s += str(indice) + ": " + str(value) +"\n"
+		#return s
+	
 		s = 'DataBase:\n' 
-		for indice in self.db:
-			value = self.db[indice]
+		for indice in self.resultDb:
+			value = self.resultDb[indice]
 			s += str(indice) + ": " + str(value) +"\n"
 		return s
 		
 	def store(self, indice, value):
-		#print(indice, value)
-		func = self.indMap[indice]['func']
-		if func == 'move':
-			value = self.indMap[indice]['value']
-		elif func == 'Accel.x' or func == 'Accel.y' or func == 'Accel.z':
-			value = (int.from_bytes(value,'big') - 2048)/1024.0
-			#rounding:
-			value = int(30*value)/30
-		self.db[func]['value'] = value
+	
+		#print("INDICE:", indice, "  VALUEEEE:                 ", value)
+		
+		self.db[indice]['valueInByte'] = value
+	
+		funcType = self.db[indice]['type']
+		if funcType == 'move':
+			lastMove = self.db[indice]['value']
+			self.resultDb['lastMove'] = lastMove
+		else:
+			valueInByte = self.db[indice]['valueInByte']
+			A = self.db[indice]['A']
+			B = self.db[indice]['B']
+			
+			value = A*int.from_bytes(valueInByte, 'big') + B			
+		
+			self.db[indice]['value'] = value
+			
+		self.getAngles()
+	
+		#if PRINT:
 		print(self)
-
+	
+	def getAngles(self):
+		
+		# Sendo g = (x,y,z) em uma base ortonormal
+		# Sabe-que que o triangulo (0,0,0)~(x,0,0)~(x,y,z) é um triangulo retangulo
+		# Analogamente para y
+		# Logo, angleXG = acos(x/g) e angleYG = acos(y/g)
+		
+		x = self.db[b'\x10']['value']
+		y = self.db[b'\x11']['value']
+		z = self.db[b'\x12']['value']
+		
+		g = (x**2 + y**2 + z**2)**.5
+		
+		print('g:' + str(g))
+		
+		#em relacao ao g
+		angleXG = math.acos(x/g)*180/math.pi
+		angleYG = math.acos(y/g)*180/math.pi
+		
+		#em relação a posição normal do robo:
+		angleX = angleXG - 90
+		angleY = angleYG - 90
+		
+		self.resultDb['angleX'] = angleX
+		self.resultDb['angleY'] = angleY
+		
 		
 ######################	NETWORK	 #################
 		
