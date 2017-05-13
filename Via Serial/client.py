@@ -32,20 +32,49 @@ class Message:
     def fromKey(self,key,pressed):
         #Gets a key and if it is being pressed or released
         #Return a list of actions in protocol format
-        self.__init__(key-48,True,pressed)
 
-    #legacy
-    def setMessage(self):
-        x = input("Qual a mensagem a ser enviada? (PSH)")
-        if len(x) == 3:
-            self.setPin(x[0])
-            self.setSet(x[1])
-            self.setHigh(x[2])
-            print("Message set to: "+str(self))
-            return True
+        #Q - UP_LEFT
+        if key == 113:
+            self.__init__(7,True,pressed)
+
+        #W - UP
+        elif key == 119:
+            self.__init__(0,True,pressed)
+
+        #E - UP_RIGHT
+        elif key == 101:
+            self.__init__(1,True,pressed)
+
+        #A - LEFT
+        elif key == 97:
+            self.__init__(6,True,pressed)
+
+        #S - STOP
+        elif key == 115:
+            self.__init__(8,True,pressed)
+
+        #D - RIGHT
+        elif key == 100:
+            self.__init__(2,True,pressed)
+
+        #Z - DOWN_LEFT
+        elif key == 122:
+            self.__init__(5,True,pressed)
+
+        #X - DOWN
+        elif key == 120:
+            self.__init__(4,True,pressed)
+
+        #C - DOWN_RIGHT
+        elif key == 99:
+            self.__init__(3,True,pressed)
+
+        #TEMP:
+        #ELSE: USE NUMBERS
+
         else:
-            print("Message incorrect")
-            return False
+            self.__init__(key-48,True,pressed)
+            
 
     def toProtocol(self):
         return str(self).encode('utf-8')
@@ -74,10 +103,12 @@ class GUI:
                     pygame.quit()
                 elif event.type == pygame.KEYDOWN:
                     print (("You pressed {}").format(event.key))
-                    return (event.key, True)
-                elif event.type == pygame.KEYUP:
-                    print (("You released {}").format(event.key))
-                    return (event.key, False)
+                    return (int(event.key), True)
+                #elif event.type == pygame.KEYUP:
+                #    print (("You released {}").format(event.key))
+                #    return (event.key, False)
+
+
 
 def main():
 
