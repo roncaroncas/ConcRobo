@@ -1,7 +1,8 @@
 import serial
 import socket
 from time import sleep
-import pygame
+from gui import GUI
+#import pygame
 import math
 
 # CONFIGURACOES GERAIS
@@ -9,6 +10,7 @@ import math
 #
 PRINT = False
 DELAY = False
+OFFLINE = True
 
 ### PROTOCOLO (HEADCHAR, ENDCHAR)
 HEADCHAR = b'\xfd'
@@ -108,110 +110,110 @@ class Response(Protocol):
 	def setData(self, data):
 		self.data = data
 		
-class GUI:
-	def __init__(self):
+# class GUI:
+# 	def __init__(self):
 
-		pygame.init()
+# 		pygame.init()
 
-		#definindo a surface
-		pygame.display.set_caption('Robo')
-		self.screen = pygame.display.set_mode((300,600))
+# 		#definindo a surface
+# 		pygame.display.set_caption('Robo')
+# 		self.screen = pygame.display.set_mode((300,600))
 
-		#definindo o periodo de repetição de key_down
-		pygame.key.set_repeat(1)
+# 		#definindo o periodo de repetição de key_down
+# 		pygame.key.set_repeat(1)
 
-		#definindo a fonte dos textos
-		myfont = pygame.font.SysFont("arial", 15)
+# 		#definindo a fonte dos textos
+# 		myfont = pygame.font.SysFont("arial", 15)
 
-		#definindo a cor de fundo
-		self.screen.fill([220,220,220])
+# 		#definindo a cor de fundo
+# 		self.screen.fill([220,220,220])
 		
-		imgNames = [
-			'N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO', 'STOP',
-			'angleX', 'angleY',		
-					]
-		self.img      = {
-                name: pygame.image.load("./img/{}.jpeg".format(name)).convert()
-                for name in imgNames
-                }
+# 		imgNames = [
+# 			'N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO', 'STOP',
+# 			'angleX', 'angleY',		
+# 					]
+# 		self.img      = {
+#                 name: pygame.image.load("./img/{}.jpeg".format(name)).convert()
+#                 for name in imgNames
+#                 }
 		
-		#setting transparency
-		for name in self.img:
-			self.img[name].set_colorkey((255,0,255))
+# 		#setting transparency
+# 		for name in self.img:
+# 			self.img[name].set_colorkey((255,0,255))
 		
-		#print(self.img)
-		#input()
+# 		#print(self.img)
+# 		#input()
 				
-		self.movePos = [50,50]
+# 		self.movePos = [50,50]
 
-		#atualizando as imagens
-		pygame.display.update()
+# 		#atualizando as imagens
+# 		pygame.display.update()
 
-	def getKey(self): #Gets if any key is pressed and what key
+# 	def getKey(self): #Gets if any key is pressed and what key
 	
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				#TODO:
-				#Sair do programa sem Error
-				pygame.quit()
-			elif event.type == pygame.KEYDOWN:
-				if PRINT:
-					#print (("You pressed {}").format(event.key))
-					pass
+# 		for event in pygame.event.get():
+# 			if event.type == pygame.QUIT:
+# 				#TODO:
+# 				#Sair do programa sem Error
+# 				pygame.quit()
+# 			elif event.type == pygame.KEYDOWN:
+# 				if PRINT:
+# 					#print (("You pressed {}").format(event.key))
+# 					pass
 					
-				return (True, int(event.key))
-		return (False, 0)
+# 				return (True, int(event.key))
+# 		return (False, 0)
 
-	def drawMove(self, move, update=True):
-		movePos = [50,50]
+# 	def drawMove(self, move, update=True):
+# 		movePos = [50,50]
 	
-		moveImg = self.img[move]
-		moveRect = moveImg.get_rect(center=movePos)
-		self.screen.blit(moveImg, moveRect)
+# 		moveImg = self.img[move]
+# 		moveRect = moveImg.get_rect(center=movePos)
+# 		self.screen.blit(moveImg, moveRect)
 		
-		if update:
-			pygame.display.update()
+# 		if update:
+# 			pygame.display.update()
 			
-	def drawAngleX(self, angleX, update=True):
-		angleXPos = [75, 200]
-		angleXImg = pygame.transform.rotate(self.img['angleX'],angleX)
+# 	def drawAngleX(self, angleX, update=True):
+# 		angleXPos = [75, 200]
+# 		angleXImg = pygame.transform.rotate(self.img['angleX'],angleX)
 		
-		angleXRect = angleXImg.get_rect(center=angleXPos)
-		self.screen.blit(angleXImg, angleXRect)
-		if update:
-			pygame.display.update()
+# 		angleXRect = angleXImg.get_rect(center=angleXPos)
+# 		self.screen.blit(angleXImg, angleXRect)
+# 		if update:
+# 			pygame.display.update()
 		
 		
-	def drawAngleY(self, angleY, update=True):
-		angleYPos = [225, 200]
-		angleYImg =  pygame.transform.rotate(self.img['angleY'],angleY)
-		angleYRect = angleYImg.get_rect(center=angleYPos)
-		self.screen.blit(angleYImg, angleYRect)
-		if update:
-			pygame.display.update()
-		pass
+# 	def drawAngleY(self, angleY, update=True):
+# 		angleYPos = [225, 200]
+# 		angleYImg =  pygame.transform.rotate(self.img['angleY'],angleY)
+# 		angleYRect = angleYImg.get_rect(center=angleYPos)
+# 		self.screen.blit(angleYImg, angleYRect)
+# 		if update:
+# 			pygame.display.update()
+# 		pass
 	
 	
-	def update(self,database):
+# 	def update(self,database):
 	
-		#self.screen.fill([220,220,220])
+# 		#self.screen.fill([220,220,220])
 		
-		#Updating move:
-		self.drawMove(database.resultDb['lastMove'],False)
+# 		#Updating move:
+# 		self.drawMove(database.resultDb['lastMove'],False)
 		
-		#Updating move:
-		#angleX = database.db['Accel.x']['value']*90.0
-		angleX = database.resultDb['angleX']
-		self.drawAngleX(angleX,False)
+# 		#Updating move:
+# 		#angleX = database.db['Accel.x']['value']*90.0
+# 		angleX = database.resultDb['angleX']
+# 		self.drawAngleX(angleX,False)
 		
-		#Updating move:
-		#angleY = database.db['Accel.y']['value']*90.0
-		angleY = database.resultDb['angleY']
-		self.drawAngleY(angleY,True)
+# 		#Updating move:
+# 		#angleY = database.db['Accel.y']['value']*90.0
+# 		angleY = database.resultDb['angleY']
+# 		self.drawAngleY(angleY,True)
 		
-		#print(angleX, angleY)
+# 		#print(angleX, angleY)
 				
-		#pygame.display.update()
+# 		#pygame.display.update()
 		
 		
 class DataBase():
@@ -229,30 +231,34 @@ class DataBase():
 					# }
 				
 					
+				
+				#value = (K)*(A*valueInByte + B) + (1-K)*oldValue 
+
+				# K = 1   ->>> o novo valor substitui completamente o valor antigo
+				# K = 0   ->>> o valor antigo não se altera
 					
 		self.db = {
-				#value = constant
-				b'\x00': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'N'		,'A': 0., 'B': 0.,} ,
-				b'\x01': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NE'	,'A': 0., 'B': 0.,} ,
-				b'\x02': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'E'		,'A': 0., 'B': 0.,} ,
-				b'\x03': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SE'	,'A': 0., 'B': 0.,} ,
-				b'\x04': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'S'		,'A': 0., 'B': 0.,} ,
-				b'\x05': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SO'	,'A': 0., 'B': 0.,} ,
-				b'\x06': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'O'		,'A': 0., 'B': 0.,} ,
-				b'\x07': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NO'	,'A': 0., 'B': 0.,} ,
-				b'\x08': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'STOP'	,'A': 0., 'B': 0.,} ,	
 				
-				#value = A*valueInByte + B 
-				b'\x10': {'type': 'Accel.x',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},			
-				b'\x11': {'type': 'Accel.y',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},		
-				b'\x12': {'type': 'Accel.z',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2.,},	
+				b'\x00': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'N'		,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x01': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NE'	,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x02': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'E'		,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x03': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SE'	,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x04': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'S'		,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x05': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SO'	,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x06': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'O'		,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x07': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NO'	,'A': 0., 'B': 0., 'K': 1} ,
+				b'\x08': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'STOP'	,'A': 0., 'B': 0., 'K': 1} ,	
 				
-				b'\x13': {'type': 'Temperatura',	'valueInByte': b'\x00\x00',	'value': -1		,'A': 0.1, 'B': 0.,},			
-				b'\x14': {'type': 'Pressão',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 100., 'B': 0.,},
+				b'\x10': {'type': 'Accel.x',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},			
+				b'\x11': {'type': 'Accel.y',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},		
+				b'\x12': {'type': 'Accel.z',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},	
 				
-				b'\x15': {'type': '?',				'valueInByte': b'\x00\x00',	'value': -1		,'A': 0., 'B': 0.,},
+				b'\x13': {'type': 'Temperatura',	'valueInByte': b'\x00\x00',	'value': -1		,'A': 0.1, 'B': 0., 'K': 1},			
+				b'\x14': {'type': 'Pressão',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 100., 'B': 0., 'K': 1},
 				
-				b'\x20': {'type': '?',				'valueInByte': b'\xff\xff',	'value': -1		,'A': 0., 'B': 0.,},	
+				b'\x15': {'type': '?',				'valueInByte': b'\x00\x00',	'value': -1		,'A': 0., 'B': 0., 'K': 1},
+				
+				b'\x20': {'type': '?',				'valueInByte': b'\xff\xff',	'value': -1		,'A': 0., 'B': 0., 'K': 1},	
 			}
 			
 		self.resultDb = {
@@ -299,7 +305,7 @@ class DataBase():
 		self.getAngles()
 	
 		#if PRINT:
-		print(self)
+		#print(self)
 	
 	def getAngles(self):
 		
@@ -314,7 +320,7 @@ class DataBase():
 		
 		g = (x**2 + y**2 + z**2)**.5
 		
-		print('g:' + str(g))
+		#print('g:' + str(g))
 		
 		#em relacao ao g
 		angleXG = math.acos(x/g)*180/math.pi
@@ -380,13 +386,30 @@ class Serial():
 		print("Waiting for arduino response")
 		return ser.readline()
 
+class FakeConnect():
+
+	def __init__(self):
+		print('Fake Connected')
+
+	def sendMsg(self,msg):
+		print("Sent fake msg")
+			 
+	def getResp(self):
+
+		#return b'\xfd\xfd\x15\xfc\xfc\xfe\xfe'
+		return b'\x15\xfc\xfc'
+
+
+
 #####################  /NETWORK	 #################
 
 
 class Client():
 	
 	def __init__(self):
-		if ETHERNET:
+		if OFFLINE:
+			self.conex = FakeConnect()
+		elif ETHERNET:
 			self.conex = Ethernet()	   
 		else:
 			self.conex = Serial()
@@ -512,7 +535,7 @@ class Client():
 
 		while (cont):
 
-			self.gui.update(self.db)
+			self.gui.drawAll(self.db.resultDb)
 			
 			#getMsg (inputs -> msg)
 			self.getMsg()
