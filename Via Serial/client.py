@@ -5,72 +5,70 @@ import socket
 from time import sleep
 import pygame
 
-HEADCHAR = "\t"
-ENDCHAR = "\n"
+HEADCHAR = b'\xfd'
+ENDCHAR = b'\xfe'
+
+IP = "169.254.104.100"
+PORT = 23
 
 class Message:
 
-    def __init__(self, PIN, SET, HIGH):
-        self.f = PIN
-        self.s = SET
-        self.h = HIGH
+    def __init__(self, FUNC):
+        self.f = FUNC
 
     def __str__(self):
-        strPin = str(self.f)[0] 
-        strSet = str(self.s*1)
-        strHigh = str(self.h*1)
-        s = HEADCHAR + strPin + strSet + strHigh + ENDCHAR
+        s = str(HEADCHAR + self.f + ENDCHAR)
         return s
 
-    def fromKey(self,key,pressed):
+    def fromKey(self,key):
         #Gets a key and if it is being pressed or released
         #Return a list of actions in protocol format
 
         #Q - UP_LEFT
         if key == 113:
-            self.__init__(7,True,pressed)
+            self.__init__(b'\x07')
 
         #W - UP
         elif key == 119:
-            self.__init__(0,True,pressed)
+            self.__init__(b'\x00')
 
         #E - UP_RIGHT
         elif key == 101:
-            self.__init__(1,True,pressed)
+            self.__init__(b'\x01')
 
         #A - LEFT
         elif key == 97:
-            self.__init__(6,True,pressed)
+            self.__init__(b'\x06')
 
         #S - STOP
         elif key == 115:
-            self.__init__(8,True,pressed)
+            self.__init__(b'\x08')
 
         #D - RIGHT
         elif key == 100:
-            self.__init__(2,True,pressed)
+            self.__init__(b'\x02')
 
         #Z - DOWN_LEFT
         elif key == 122:
-            self.__init__(5,True,pressed)
+            self.__init__(b'\x05')
 
         #X - DOWN
         elif key == 120:
-            self.__init__(4,True,pressed)
+            self.__init__(b'\x04')
 
         #C - DOWN_RIGHT
         elif key == 99:
-            self.__init__(3,True,pressed)
+            self.__init__(b'\x03')
 
         #TEMP:
         #ELSE: USE NUMBERS
 
-        else:
-            self.__init__(key-48,True,pressed)
-            print("Não está sendo utilizada uma tecla de comando padrão")
+        #else:
+        #    self.__init__((key-48).to_bytes(1,'big'))
+        #    print("Não está sendo utilizada uma tecla de comando padrão.\nEventos não espereados podem acontecer")
 
     def toProtocol(self):
-        return str(self).encode('utf-8')
+        return (HEADCHAR + self.f + ENDCHAR)
 
 class GUI:
     def __init__(self):
@@ -79,7 +77,7 @@ class GUI:
         pygame.display.set_caption('Robo')
 
         #definindo a surface
-        self.screen = pygame.display.set_mode((200,150))
+        self.screen = pygame.display.set_mode((1000,750))
 
         myfont = pygame.font.SysFont("arial", 15)
 
@@ -112,10 +110,11 @@ def main():
 
     sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
     
-    print('a')
-    sock.connect(("localhost", 80))
+    print('connecting...')
+    sock.connect((IP, PORT))
+    print('connected')
 
-    msg = Message(0,False,False)
+    msg = Message(b'\x00')
 
     gui = GUI()
 
@@ -127,26 +126,20 @@ def main():
     # e.g. Set pin 4 to HIGH: msg = "411"
     # e.g. Get pin 11:  msg = "b00"
 
-    print("A Mensagem a ser enviada necessita ter 3 caracteres:")
-    print("Pino em hexadecimal (de 0 a d)")
-    print("Get/Set (0/1)")
-    print("LOW/HIGH (0/1)")
     print()
 
     #Loop
     while (True):
 
         #get Comando
-        key, pressed = gui.getKey()
-        print("Key: " + str(key) + " Pressed: " + str(pressed))
+        key, _ = gui.getKey()
+        print("Key: " + str(key))
 
-        #sleep(5)
-
-        msg.fromKey(key, pressed) #TODO
-
+        msg.fromKey(key) #TODO
 
         #send Comando
         #ser.write(msg.toProtocol())
+        #sock.sendall(b'511')
         sock.sendall(msg.toProtocol())
 
         print("Sent ", msg.toProtocol() ," to arduino")
@@ -155,7 +148,7 @@ def main():
         #get response
         #response = ser.readline()
 
-        response = sock.recv(1024)
+        response = sock.recv(3)
 
         #display response
         #print (response.decode('utf-8'))
