@@ -1,33 +1,26 @@
 # This is using the libraries: pygame and pyserial
 
-import serial
+#import serial
+import socket
 from time import sleep
 import pygame
 
+HEADCHAR = "\t"
 ENDCHAR = "\n"
 
 class Message:
 
     def __init__(self, PIN, SET, HIGH):
-        self.p = PIN
+        self.f = PIN
         self.s = SET
         self.h = HIGH
 
     def __str__(self):
-        strPin = hex(int(self.p))[2] 
+        strPin = str(self.f)[0] 
         strSet = str(self.s*1)
         strHigh = str(self.h*1)
-        s = strPin + strSet + strHigh + ENDCHAR
+        s = HEADCHAR + strPin + strSet + strHigh + ENDCHAR
         return s
-
-    def setPin(self, PIN):
-        self.p = PIN
-
-    def setSet(self, SET):
-        self.s = SET
-
-    def setHigh(self, HIGH):
-        self.h = HIGH
 
     def fromKey(self,key,pressed):
         #Gets a key and if it is being pressed or released
@@ -74,7 +67,7 @@ class Message:
 
         else:
             self.__init__(key-48,True,pressed)
-            
+            print("Não está sendo utilizada uma tecla de comando padrão")
 
     def toProtocol(self):
         return str(self).encode('utf-8')
@@ -112,11 +105,17 @@ class GUI:
 
 def main():
 
-    #Setup
-    ser = serial.Serial("com3", 9600, timeout=4)
-    msg = Message(0,False,False)
 
-    sleep(2)
+    #Setup
+    #ser = serial.Serial("com3", 9600, timeout=4)
+    ###SOCKET
+
+    sock =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
+    
+    print('a')
+    sock.connect(("localhost", 80))
+
+    msg = Message(0,False,False)
 
     gui = GUI()
 
@@ -147,17 +146,20 @@ def main():
 
 
         #send Comando
-        ser.write(msg.toProtocol())
+        #ser.write(msg.toProtocol())
+        sock.sendall(msg.toProtocol())
 
         print("Sent ", msg.toProtocol() ," to arduino")
         print("Waiting for arduino response")
-
+        
         #get response
-        response = ser.readline()
+        #response = ser.readline()
+
+        response = sock.recv(1024)
 
         #display response
         #print (response.decode('utf-8'))
-        print(response, "\n")
+        print('Received', response)
 
         
 if __name__ == "__main__":
