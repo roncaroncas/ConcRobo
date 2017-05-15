@@ -1,221 +1,18 @@
-import serial
-import socket
+
 from time import sleep
 from gui import GUI
-#import pygame
+from network import Ethernet, Serial, FakeConnect
+from protocol import Message, Response
+
 import math
 
 # CONFIGURACOES GERAIS
-
 #
 PRINT = False
 DELAY = False
-OFFLINE = True
-
-### PROTOCOLO (HEADCHAR, ENDCHAR)
-HEADCHAR = b'\xfd'
-ENDCHAR = b'\xfe'
-BYTES_IN_MSG = 3
-BYTES_IN_RESP = 8
+OFFLINE = False
 ETHERNET = True		#True: via Ethernet, False: via Serial
 
-###ETHERNET: (IP, PORT)
-######ARDUINO:
-#IP = "169.254.104.100"
-IP = "192.168.0.120"
-PORT = 23
-#####LOCAL:
-#IP = "127.0.0.1"
-#PORT = 8080
-
-#SERIAL:
-COM_PORT = "com3"
-
-	
-class Protocol:
-	
-	def __str__(self):
-		return str(self.head + self.data + self.end)
-
-	def toProtocol(self):
-		return (self.head + self.data + self.end)
-
-class Message(Protocol):
-
-	def __init__(self):
-		self.head = HEADCHAR
-		self.data = b'\x08'
-		self.end = ENDCHAR
-		self.infoCycle = [
-			b'\x10', b'\x11', b'\x12', b'\x13', b'\x14', b'\x15'] #GARANTIR QUE InfoCycle Segue o protocolo para as informações dos dados analogicos
-		self.iInfo = 0
-		
-	def forceStop(self):
-		self.data = b'\x08'
-
-	def fromKey(self,key):
-		#Gets a key
-		#Return a list of actions in protocol format
-
-		#Q - UP_LEFT
-		if key == 113:
-			self.data = b'\x07'
-
-		#W - UP
-		elif key == 119:
-			self.data = b'\x00'
-
-		#E - UP_RIGHT
-		elif key == 101:
-			self.data = b'\x01'
-
-		#A - LEFT
-		elif key == 97:
-			self.data = b'\x06'
-
-		#S - STOP
-		elif key == 115:
-			self.data = b'\x08'
-
-		#D - RIGHT
-		elif key == 100:
-			self.data = b'\x02'
-
-		#Z - DOWN_LEFT
-		elif key == 122:
-			self.data = b'\x05'
-
-		#X - DOWN
-		elif key == 120:
-			self.data = b'\x04'
-
-		#C - DOWN_RIGHT
-		elif key == 99:
-			self.data = b'\x03'
-
-		else:
-			self.data = b'\x20'
-
-	def nextInfo(self):
-		self.data = self.infoCycle[self.iInfo]
-		self.iInfo = (self.iInfo + 1)%len(self.infoCycle)
-
-class Response(Protocol):
-	
-	def __init__(self):
-		self.head = HEADCHAR + HEADCHAR
-		self.data = b'\x00' + b'\x00'
-		self.end = ENDCHAR + ENDCHAR
-		
-	def setData(self, data):
-		self.data = data
-		
-# class GUI:
-# 	def __init__(self):
-
-# 		pygame.init()
-
-# 		#definindo a surface
-# 		pygame.display.set_caption('Robo')
-# 		self.screen = pygame.display.set_mode((300,600))
-
-# 		#definindo o periodo de repetição de key_down
-# 		pygame.key.set_repeat(1)
-
-# 		#definindo a fonte dos textos
-# 		myfont = pygame.font.SysFont("arial", 15)
-
-# 		#definindo a cor de fundo
-# 		self.screen.fill([220,220,220])
-		
-# 		imgNames = [
-# 			'N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO', 'STOP',
-# 			'angleX', 'angleY',		
-# 					]
-# 		self.img      = {
-#                 name: pygame.image.load("./img/{}.jpeg".format(name)).convert()
-#                 for name in imgNames
-#                 }
-		
-# 		#setting transparency
-# 		for name in self.img:
-# 			self.img[name].set_colorkey((255,0,255))
-		
-# 		#print(self.img)
-# 		#input()
-				
-# 		self.movePos = [50,50]
-
-# 		#atualizando as imagens
-# 		pygame.display.update()
-
-# 	def getKey(self): #Gets if any key is pressed and what key
-	
-# 		for event in pygame.event.get():
-# 			if event.type == pygame.QUIT:
-# 				#TODO:
-# 				#Sair do programa sem Error
-# 				pygame.quit()
-# 			elif event.type == pygame.KEYDOWN:
-# 				if PRINT:
-# 					#print (("You pressed {}").format(event.key))
-# 					pass
-					
-# 				return (True, int(event.key))
-# 		return (False, 0)
-
-# 	def drawMove(self, move, update=True):
-# 		movePos = [50,50]
-	
-# 		moveImg = self.img[move]
-# 		moveRect = moveImg.get_rect(center=movePos)
-# 		self.screen.blit(moveImg, moveRect)
-		
-# 		if update:
-# 			pygame.display.update()
-			
-# 	def drawAngleX(self, angleX, update=True):
-# 		angleXPos = [75, 200]
-# 		angleXImg = pygame.transform.rotate(self.img['angleX'],angleX)
-		
-# 		angleXRect = angleXImg.get_rect(center=angleXPos)
-# 		self.screen.blit(angleXImg, angleXRect)
-# 		if update:
-# 			pygame.display.update()
-		
-		
-# 	def drawAngleY(self, angleY, update=True):
-# 		angleYPos = [225, 200]
-# 		angleYImg =  pygame.transform.rotate(self.img['angleY'],angleY)
-# 		angleYRect = angleYImg.get_rect(center=angleYPos)
-# 		self.screen.blit(angleYImg, angleYRect)
-# 		if update:
-# 			pygame.display.update()
-# 		pass
-	
-	
-# 	def update(self,database):
-	
-# 		#self.screen.fill([220,220,220])
-		
-# 		#Updating move:
-# 		self.drawMove(database.resultDb['lastMove'],False)
-		
-# 		#Updating move:
-# 		#angleX = database.db['Accel.x']['value']*90.0
-# 		angleX = database.resultDb['angleX']
-# 		self.drawAngleX(angleX,False)
-		
-# 		#Updating move:
-# 		#angleY = database.db['Accel.y']['value']*90.0
-# 		angleY = database.resultDb['angleY']
-# 		self.drawAngleY(angleY,True)
-		
-# 		#print(angleX, angleY)
-				
-# 		#pygame.display.update()
-		
-		
 class DataBase():
 	def __init__(self):
 	
@@ -228,9 +25,7 @@ class DataBase():
 					# 'Pressao': {'value': ""}, #b'\x14'
 					
 					# '?':	{},
-					# }
-				
-					
+					# }					
 				
 				#value = (K)*(A*valueInByte + B) + (1-K)*oldValue 
 
@@ -239,26 +34,26 @@ class DataBase():
 					
 		self.db = {
 				
-				b'\x00': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'N'		,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x01': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NE'	,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x02': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'E'		,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x03': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SE'	,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x04': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'S'		,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x05': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'SO'	,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x06': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'O'		,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x07': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'NO'	,'A': 0., 'B': 0., 'K': 1} ,
-				b'\x08': {'type': 'move',			'valueInByte': b'\xff\xff',	'value':'STOP'	,'A': 0., 'B': 0., 'K': 1} ,	
+				b'\x00': {'type': 'move',			'value':'N'		,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x01': {'type': 'move',			'value':'NE'	,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x02': {'type': 'move',			'value':'E'		,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x03': {'type': 'move',			'value':'SE'	,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x04': {'type': 'move',			'value':'S'		,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x05': {'type': 'move',			'value':'SO'	,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x06': {'type': 'move',			'value':'O'		,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x07': {'type': 'move',			'value':'NO'	,'A': 0., 'B': 0., 'K': 0} ,
+				b'\x08': {'type': 'move',			'value':'STOP'	,'A': 0., 'B': 0., 'K': 0} ,	
 				
-				b'\x10': {'type': 'Accel.x',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},			
-				b'\x11': {'type': 'Accel.y',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},		
-				b'\x12': {'type': 'Accel.z',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 1/1024., 'B': -2., 'K': 1},	
+				b'\x10': {'type': 'Accel.x',		'value': 0		,'A': 1/1024., 'B': -2., 'K': .8},			
+				b'\x11': {'type': 'Accel.y',		'value': 0		,'A': 1/1024., 'B': -2., 'K': .8},		
+				b'\x12': {'type': 'Accel.z',		'value': 1		,'A': 1/1024., 'B': -2., 'K': .8},	
 				
-				b'\x13': {'type': 'Temperatura',	'valueInByte': b'\x00\x00',	'value': -1		,'A': 0.1, 'B': 0., 'K': 1},			
-				b'\x14': {'type': 'Pressão',		'valueInByte': b'\x00\x00',	'value': -1		,'A': 100., 'B': 0., 'K': 1},
+				b'\x13': {'type': 'Temperatura',	'value': 25		,'A': 0.1, 'B': 0., 'K': .8},			
+				b'\x14': {'type': 'Pressão',		'value': 0		,'A': 100., 'B': 0., 'K': .8},
 				
-				b'\x15': {'type': '?',				'valueInByte': b'\x00\x00',	'value': -1		,'A': 0., 'B': 0., 'K': 1},
+				b'\x15': {'type': '?',				'value': -1		,'A': 0., 'B': 0., 'K': .8},
 				
-				b'\x20': {'type': '?',				'valueInByte': b'\xff\xff',	'value': -1		,'A': 0., 'B': 0., 'K': 1},	
+				b'\x20': {'type': '?',				'value': -1		,'A': 0., 'B': 0., 'K': .8},	
 			}
 			
 		self.resultDb = {
@@ -266,7 +61,7 @@ class DataBase():
 				'angleX' : 		0,			# º
 				'angleY' : 		0,			# º
 				'temperature': 	25.0, 		# ºC
-				'pressao': 		10000, 		# Pa
+				'pressure':		10000, 		# Pa
 		}
 
 	def __str__(self):
@@ -283,36 +78,53 @@ class DataBase():
 			s += str(indice) + ": " + str(value) +"\n"
 		return s
 		
-	def store(self, indice, value):
+	def store(self, indice, bValue):
+	
 	
 		#print("INDICE:", indice, "  VALUEEEE:                 ", value)
-		
-		self.db[indice]['valueInByte'] = value
 	
-		funcType = self.db[indice]['type']
-		if funcType == 'move':
-			lastMove = self.db[indice]['value']
-			self.resultDb['lastMove'] = lastMove
-		else:
-			valueInByte = self.db[indice]['valueInByte']
+		value = int.from_bytes(bValue, 'big')
+	
+		K = self.db[indice]['K']
+		
+		if K != 0:
+		
+			#newValue = (K)*(A*oldValue + B) + (1-K)*oldValue 
+
+			oldValue = self.db[indice]['value']
+		
 			A = self.db[indice]['A']
 			B = self.db[indice]['B']
 			
-			value = A*int.from_bytes(valueInByte, 'big') + B			
+			newValue = K*(A*value + B)	+ (1-K)*oldValue		
 		
-			self.db[indice]['value'] = value
-			
-		self.getAngles()
+			self.db[indice]['value'] = newValue
+		
+		
+		funcType = self.db[indice]['type']
+		
+		if funcType == 'move':
+			lastMove = self.db[indice]['value']
+			self.resultDb['lastMove'] = lastMove
+
+		
 	
-		#if PRINT:
-		#print(self)
+		self.sintese()
+	
+	def sintese(self):
+
+		self.getAngles()
+		self.getTemp()
+		self.getPress()
 	
 	def getAngles(self):
+	
+		#CONVENCAO: A frente do carrinho aponta na mesma direção do eixo Y, a parte superior aponta para o eixo Z.
 		
 		# Sendo g = (x,y,z) em uma base ortonormal
 		# Sabe-que que o triangulo (0,0,0)~(x,0,0)~(x,y,z) é um triangulo retangulo
 		# Analogamente para y
-		# Logo, angleXG = acos(x/g) e angleYG = acos(y/g)
+		# Logo, |angleXG| = acos(x/g) e |angleYG| = acos(y/g)
 		
 		x = self.db[b'\x10']['value']
 		y = self.db[b'\x11']['value']
@@ -322,83 +134,33 @@ class DataBase():
 		
 		#print('g:' + str(g))
 		
-		#em relacao ao g
-		angleXG = math.acos(x/g)*180/math.pi
-		angleYG = math.acos(y/g)*180/math.pi
+		#Se g > 1.5 ou o carrinho ta caindo, ou deu um erro de medição, se ele tiver caindo, nao adianta medir.
+		if g > 1.5:
+			return
+		
+		#em relacao ao g (sem sinal)
+		angleXG = - math.acos(x/g)*180/math.pi
+		angleYG = - math.acos(y/g)*180/math.pi
 		
 		#em relação a posição normal do robo:
-		angleX = angleXG - 90
-		angleY = angleYG - 90
+		angleX = angleXG + 90
+		angleY = angleYG + 90
 		
+		print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
+	
 		self.resultDb['angleX'] = angleX
 		self.resultDb['angleY'] = angleY
+		
+	def getTemp(self):
+		self.resultDb['temperature'] = self.db[b'\x13']['value']
+	
+	def getPress(self):
+		self.resultDb['pressure'] = self.db[b'\x14']['value']
+		
 		
 		
 ######################	NETWORK	 #################
 		
-class Ethernet():
-
-	def __init__(self):
-		self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-		print('Connecting to {}:{} ...'.format(IP,PORT))
-		self.sock.settimeout(5)
-		self.sock.connect((IP, PORT))
-		print('Connected')
-
-	def sendMsg(self,msg):
-		self.sock.sendall(msg.toProtocol())
-		if PRINT:
-			print("Sent ", msg.toProtocol() ," to arduino")
-		
-	def getResp(self):
-		i, j = b'', b''
-		if PRINT:
-			print("Waiting for arduino response")
-
-		resp = b''
-
-		i = self.sock.recv(1)
-		while (True):
-			j = self.sock.recv(1)
-			if i == j == HEADCHAR:
-				resp = b''
-			elif i == j == ENDCHAR:
-				resp = resp[:-1]
-				return resp
-			else:
-				resp += j
-			i = j
-		  
-#TODO: VERIFICAR SE SERIAL ESTÁ FUNCIONANDO, AINDA NAO FOI DEBUGADO!!
-class Serial():
-
-	def __init__(self):
-		print('Connecting...')
-		self.ser = serial.Serial(COM_PORT, 9600, timeout=4)
-		print('Connected')
-
-	def sendMsg(self,msg):
-		self.ser.write(msg.toProtocol())
-		print("Sent ", msg.toProtocol() ," to arduino")
-			 
-	def getResp(self):
-		print("Waiting for arduino response")
-		return ser.readline()
-
-class FakeConnect():
-
-	def __init__(self):
-		print('Fake Connected')
-
-	def sendMsg(self,msg):
-		print("Sent fake msg")
-			 
-	def getResp(self):
-
-		#return b'\xfd\xfd\x15\xfc\xfc\xfe\xfe'
-		return b'\x15\xfc\xfc'
-
 
 
 #####################  /NETWORK	 #################
