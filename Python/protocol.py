@@ -1,8 +1,5 @@
-### PROTOCOLO (HEADCHAR, ENDCHAR)
-HEADCHAR = b'\xfd'
-ENDCHAR = b'\xfe'
-BYTES_IN_MSG = 3
-BYTES_IN_RESP = 8
+#import constants in config
+from config import *
 
 class Protocol:
 	
@@ -18,8 +15,7 @@ class Message(Protocol):
 		self.head = HEADCHAR
 		self.data = b'\x08'
 		self.end = ENDCHAR
-		self.infoCycle = [
-			b'\x10', b'\x11', b'\x12', b'\x13', b'\x14', b'\x15'] #GARANTIR QUE InfoCycle Segue o protocolo para as informações dos dados analogicos
+		self.infoCycle = INFOCYCLE #GARANTIR QUE InfoCycle Segue o protocolo para as informações dos dados analogicos
 		self.iInfo = 0
 		
 	def forceStop(self):
@@ -29,45 +25,28 @@ class Message(Protocol):
 		#Gets a key
 		#Return a list of actions in protocol format
 
-		#Q - UP_LEFT
-		if key == 113:
-			self.data = b'\x07'
+		map = {
+		UP_LEFT_KEY: b'\x07', #Q
+		UP_KEY: b'\x00', #W
+		UP_RIGHT_KEY: b'\x01', #E
+		LEFT_KEY:  b'\x06', #A
+		STOP_KEY: b'\x08', #S
+		RIGHT_KEY: b'\x02', #D
+		DOWN_LEFT_KEY: b'\x05', #Z
+		DOWN_KEY: b'\x04', #X
+		DOWN_RIGHT_KEY:  b'\x03', #C
 
-		#W - UP
-		elif key == 119:
-			self.data = b'\x00'
-
-		#E - UP_RIGHT
-		elif key == 101:
-			self.data = b'\x01'
-
-		#A - LEFT
-		elif key == 97:
-			self.data = b'\x06'
-
-		#S - STOP
-		elif key == 115:
-			self.data = b'\x08'
-
-		#D - RIGHT
-		elif key == 100:
-			self.data = b'\x02'
-
-		#Z - DOWN_LEFT
-		elif key == 122:
-			self.data = b'\x05'
-
-		#X - DOWN
-		elif key == 120:
-			self.data = b'\x04'
-
-		#C - DOWN_RIGHT
-		elif key == 99:
-			self.data = b'\x03'
-
+		PLUS_LIGHT_KEY: b'\x16', # O (or click)
+		MINUS_LIGHT_KEY: b'\x17', # P (or click)
+		}
+		
+		if key in map:
+			self.data = map[key]
 		else:
 			self.data = b'\x20'
-
+			
+		print(self.data)
+			
 	def nextInfo(self):
 		self.data = self.infoCycle[self.iInfo]
 		self.iInfo = (self.iInfo + 1)%len(self.infoCycle)
