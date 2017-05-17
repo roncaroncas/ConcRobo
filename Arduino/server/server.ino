@@ -7,7 +7,6 @@
 
 // Network
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-//byte ip[] = { 169, 254, 104, 100 };
 byte ip[] = {192, 168, 0, 120};
 byte gateway[] = { 192, 168, 0 , 1};
 byte subnet[] = { 255, 255, 255, 0 };
@@ -32,10 +31,13 @@ unsigned long tLim = 1000000000;
 unsigned long tic;
 
 //Message variables
-int msgData;
+byte priorityMsg = 0xE0;  //Default value (reserved in protocol)
+byte msgData;
+byte infoCycle [] = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x18};
+int iInfo = 0;
 
 //Response variables
-byte resp[7];
+byte resp[8];
 
 // Protocol Variables
 byte headByte = 0xFD;
@@ -82,15 +84,6 @@ void setup() {
   pinMode(pinRelD, OUTPUT);
   Serial.println("Relays ready");
 
-
-  //Pinos analógicos ??
-  //pinMode(A0, OUTPUT);
-  //pinMode(A1, OUTPUT);
-  //pinMode(A2, OUTPUT);
-  //pinMode(A3, OUTPUT);
-  //pinMode(A4, OUTPUT);
-  //pinMode(A5, OUTPUT);
-
   delay(1000); //espera 0,2 segundos para estabilizar conexao
 
   Serial.println("Setup Ready");
@@ -106,19 +99,31 @@ void loop() {
   //MOVEMENT
   if (newMsg == true) {
     newMsg = false;
-    if (msgData <= 8) {
+    if (msgData <= 0x08) { // se msgData é uma mensagem de movemento
       setControlVars(); // msgData -> atualiza as variáveis de controle
       getControlResp(); // -> resp
     }
-    //ASK INFO
-    else if (msgData <= 37) {
+    //ASK INFO (accels, temperature, pressure, battery, light
+
+    else if (msgData <= 0x20) {
       getAnalogicResp(); // -> resp
+    }
+    
+    else if (msgData == 0x30) {
+      if (priorityMsg != 0xE0){
+        msgData = priorityMsg;
+        priorityMsg = 0xE0; //Reset value to default
+      } else {
+        msgData = infoCycle[iInfo];
+        iInfo = (iInfo+1)%(sizeof(infoCycle)-1);
+      }
+      getAnalogicResp(); // -> resp     
     }
   }
   //Variaveis de controle
   if (newResp == true) {
     newResp = false;
-    sendResponse(); //print response in Serial.println
+    sendResponse();
   }
 
   keepMoving(); //verifica a partir das variaveis de controle e do timeLeft se ja devem parar
@@ -179,8 +184,8 @@ void getControlResp() {
 
   //DATA + COMPLETE
   resp[2] = msgData;
-  resp[3] = 0xFF;
-  resp[4] = 0xFF;
+  resp[3] = 0xFC;
+  resp[4] = 0xFC;
 
   //END
   resp[5] = endByte;
@@ -191,7 +196,6 @@ void getControlResp() {
 
 void getAnalogicResp() {
 
-  ///!!!!!!!!!!!!!!TODO URGENTE: CONVERTER VALUE PARA BYTE!!!!!!!!!!!!!!!!!!!!!!!!!!
   newResp = true;
   int analogPin;
   int value;
@@ -201,7 +205,7 @@ void getAnalogicResp() {
   //analogPin = int(msgData)-16;
 
   //value = analogRead(analogPin);
-
+  
   switch (msgData) {
 
     // 0x10: ACCEL.X
@@ -255,12 +259,12 @@ void getAnalogicResp() {
       val1 = byte(value / 256);
       val2 = byte(value % 256);
       
-      Serial.print("Temperature = ");
-      Serial.print(bmp.readTemperature());
-      Serial.println(" *C");
-      Serial.print("Val: ");
-      Serial.println(String(val1) + " " + String(val2));
-      Serial.println();
+      //Serial.print("Temperature = ");
+      //Serial.print(bmp.readTemperature());
+      //Serial.println(" *C");
+      //Serial.print("Val: ");
+      //Serial.println(String(val1) + " " + String(val2));
+      //Serial.println();
       break;
 
     //0x14: Pressure
@@ -273,20 +277,46 @@ void getAnalogicResp() {
       val1 = byte(value / 256);
       val2 = byte(value % 256);
       
-      Serial.print("Pressure = ");
-      Serial.print(bmp.readPressure());
-      Serial.println(" Pa");
-      Serial.print("Val: ");
-      Serial.println(String(val1) + " " + String(val2));
+      //Serial.print("Pressure = ");
+      //Serial.print(bmp.readPressure());
+      //Serial.println(" Pa");
+      //Serial.print("Val: ");
+      //Serial.println(String(val1) + " " + String(val2));
       
-      Serial.println();
+      //Serial.println();
       break;
 
-    //0x15: ?
+    //0x15: Battery     -------------  TODO
     case 0x15:
       val1 = 0xFF;
       val2 = 0xFF;
       break;
+
+    //0x16: Light -    --------------- TODO
+    case 0x16:
+      val1 = 0xFF;
+      val2 = 0xFF;
+      break; 
+
+  
+    //0x16: Light +    --------------- TODO
+    case 0x17:
+      val1 = 0xFF;
+      val2 = 0xFF;
+      break; 
+
+    
+    //0x17: Light     ---------------- TODO
+    case 0x18:
+      val1 = 0xFF;
+      val2 = 0xFF;
+      break; 
+  }
+
+
+  //CORRECAO DE BUG PARA val2 = endbyte:
+  if (val2 == endByte){
+    val2 = val2 + 1;
   }
 
   //HEAD
@@ -306,20 +336,7 @@ void getAnalogicResp() {
 
 ////////////////////////////////// COMUNICACAO - SEND /////////////////////////
 void sendResponse() {
-
-  //TODO, DESCOBRIR COMO COMPACTAR ISSO A BAIXO SEM AUMENTAR O LAG
-  //tic = millis();
-
-  //server.write(resp,7);
-  server.write(resp[0]);
-  server.write(resp[1]);
-  server.write(resp[2]);
-  server.write(resp[3]);
-  server.write(resp[4]);
-  server.write(resp[5]);
-  server.write(resp[6]);
-
-  //Serial.println("Resp: " + String(resp[0]) + " " + String(resp[1]) + " " + String(resp[2]) + " " + String(resp[3]) + " " + String(resp[4]) + " " + String(resp[5]) + " " + String(resp[6]));
+  server.write(resp,8);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -327,9 +344,11 @@ void sendResponse() {
 ///////////////////////////// ACT ////////////////////////////////////////////////
 
 void keepMoving() {
-  if (millis() > tLim) {
+  if (millis() > tLim && lastOrder != 0x08) {
     lastOrder = 0x08;
     stopReles();
+    priorityMsg = 0x08;
+    Serial.println("Move time out!");
   }
 }
 
@@ -340,7 +359,7 @@ void setReles() {
   switch (msgData) {
 
     //UP
-    case 0 :
+    case 0x00 :
       relA = true;
       relB = false;
       relC = true;
@@ -348,7 +367,7 @@ void setReles() {
       break;
 
     //UP_RIGHT
-    case 1 :
+    case 0x01 :
       relA = true;
       relB = false;
       relC = false;
@@ -356,7 +375,7 @@ void setReles() {
       break;
 
     //RIGHT
-    case 2 :
+    case 0x02 :
       relA = false;
       relB = true;
       relC = true;
@@ -364,7 +383,7 @@ void setReles() {
       break;
 
     //DOWN_RIGHT
-    case 3 :
+    case 0x03 :
       relA = false;
       relB = false;
       relC = false;
@@ -372,7 +391,7 @@ void setReles() {
       break;
 
     //DOWN
-    case 4 :
+    case 0x04 :
       relA = false;
       relB = true;
       relC = false;
@@ -380,7 +399,7 @@ void setReles() {
       break;
 
     //DOWN_LEFT
-    case 5 :
+    case 0x05 :
       relA = false;
       relB = true;
       relC = false;
@@ -388,7 +407,7 @@ void setReles() {
       break;
 
     //LEFT
-    case 6 :
+    case 0x06 :
       relA = true;
       relB = false;
       relC = false;
@@ -396,7 +415,7 @@ void setReles() {
       break;
 
     //UP_LEFT
-    case 7 :
+    case 0x07 :
       relA = false;
       relB = false;
       relC = true;
@@ -404,15 +423,12 @@ void setReles() {
       break;
 
     //STOP
-    case 8:
+    case 0x08:
       relA = false;
       relB = false;
       relC = false;
       relD = false;
       break;
-
-    default:
-      Serial.println("ERROR: setReles() in default!");
   }
   updateReles();
 }
