@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 from gui import GUI
 from network import Ethernet, Serial, FakeConnect
 from protocol import Message, Response
@@ -18,15 +18,15 @@ class DataBase():
 				'angleX' : 		0,			# º
 				'angleY' : 		0,			# º
 				
-				'light':		80,			# %
-				'temperature': 	25.0, 		# ºC
-				'pressure':		200000, 	# Pa
-				'battery': 		40,			# %
+				'light':		100,		# %
+				'temperature': 	-1, 		# ºC
+				'pressure':		-1, 		# Pa
+				'battery': 		-1,			# %
 
-				'distance':		10000,		#TODO
-				'velocity': 	100,		#TODO
+				'distance':		0,			#TODO
+				'velocity': 	0,			#TODO
 				
-				
+				'ping':			0,
 				}	
 					
 		self.map = {
@@ -45,14 +45,14 @@ class DataBase():
 				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},		
 				b'\x12': {'pointTo': 'accelZ',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},	
 				
-				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': .8},			
-				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': .8},	
+				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': 1.},			
+				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': 1.},	
 				b'\x15': {'pointTo': 'battery',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
 				
-				b'\x16': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
-				b'\x17': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
+				b'\x16': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca vai entrar nessa linha
+				b'\x17': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca via entrar nessa linha
+				b'\x18': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
 				
-				b'\x18': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': 0.},
 				b'\x19': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': 0.},
 				
 				b'\x20': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': .8},	
@@ -76,17 +76,24 @@ class DataBase():
 		
 		if setter == 'setValue':
 			#Replace value with set value
-			self.state[stateToChange] = newValue
+			self.state[stateToChange] = self.map[indice]['value']
 			
 		elif setter == 'ABK':
 			#newValue = (K)*(A*valueInByte + B) + (1-K)*oldValue
+			
+			#Flag 
+			if bValue == b'\xff\xff':
+				return
 			
 			value = int.from_bytes(bValue, 'big')
 			memValue = self.state[stateToChange]
 			
 			A = self.map[indice]['A']
 			B = self.map[indice]['B']
-			K = self.map[indice]['K']
+			if memValue == -1:
+				K = 1
+			else:
+				K = self.map[indice]['K']
 			
 			newValue = 	K*(A*value + B)	+ (1-K)*memValue	
 
@@ -139,12 +146,12 @@ class Client():
 				self.msg.fromKey(key)
 				self.writeTurn = False
 			else:
-				self.msg.nextInfo()
+				self.msg.anyInfo()
 				self.writeTurn = True
 		else:
 			if PRINT:
 				print()
-			self.msg.nextInfo()
+			self.msg.anyInfo()
 			self.writeTurn = True
 
 	def sendMsg(self):
@@ -180,12 +187,19 @@ class Client():
 			#getMsg (inputs -> msg)
 			self.getMsg()
 
+			tic = time()
+			
 			#sendMsg (msg -> )
 			self.sendMsg()
 
 			#getResp (server -> resp)
 			self.getResp()
+			
+			toc = time()
 
+			ping = 1000*(toc-tic)
+			self.db.state['ping'] = ping
+			
 			#dispResp (print resp)
 			self.dispResp()
 

@@ -26,9 +26,6 @@ def accelToAngle(x, y, z):
 	angleY = angleYG + 90
 	angleZ = angleZG + 90
 	
-	print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
+#	print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
 
-	self.state['angleX'] = angleX
-	self.state['angleY'] = angleY
-	
 	return (angleX, angleY, angleZ)

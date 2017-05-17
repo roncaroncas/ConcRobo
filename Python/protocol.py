@@ -15,8 +15,6 @@ class Message(Protocol):
 		self.head = HEADCHAR
 		self.data = b'\x08'
 		self.end = ENDCHAR
-		self.infoCycle = INFOCYCLE #GARANTIR QUE InfoCycle Segue o protocolo para as informações dos dados analogicos
-		self.iInfo = 0
 		
 	def forceStop(self):
 		self.data = b'\x08'
@@ -45,11 +43,10 @@ class Message(Protocol):
 		else:
 			self.data = b'\x20'
 			
-		print(self.data)
+		#print(self.data)
 			
-	def nextInfo(self):
-		self.data = self.infoCycle[self.iInfo]
-		self.iInfo = (self.iInfo + 1)%len(self.infoCycle)
+	def anyInfo(self):
+		self.data = ANYINFO
 
 class Response(Protocol):
 	
