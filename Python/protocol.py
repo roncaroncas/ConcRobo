@@ -19,7 +19,7 @@ class Message(Protocol):
 	def forceStop(self):
 		self.data = b'\x08'
 
-	def fromKey(self,key):
+	def mapKeyToData(self,key):
 		#Gets a key
 		#Return a list of actions in protocol format
 
@@ -41,7 +41,7 @@ class Message(Protocol):
 		if key in map:
 			self.data = map[key]
 		else:
-			self.data = b'\x20'
+			self.data = b'\x30'
 			
 		#print(self.data)
 			

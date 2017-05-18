@@ -120,6 +120,7 @@ class DataBase():
 class Client():
 	
 	def __init__(self):
+		#DEFINE O TIPO DE CONEXAO:
 		if CONEX == "OFFLINE":
 			self.conex = FakeConnect()
 		elif CONEX == "ETHERNET":
@@ -129,30 +130,54 @@ class Client():
 		else:
 			print("Wrong Connection type!")
 			
+		#DEFINE OS OBJETOS NECESSARIOS
 		self.msg = Message()
 		self.resp = Response()
 		self.gui = GUI()
 		self.db = DataBase()
+		
+		#VARIAVEL DE FLUXO: Alternar entre mandar write de client -> arduino e pedir read de client -> arduino
 		self.writeTurn = True #altera-se entre true e false para enviar informacoes de movimento ou para pedir informacoes analogicas
-
-	def getMsg(self):
-		if DELAY:
-			sleep(0.5)
-
-		if (self.writeTurn):
-			#ver se existe alguma acao requisitada pressionada
-			success, key = self.gui.getAction()
-			if (success):
-				self.msg.fromKey(key)
+		
+		self.tela = "Start"
+		
+		
+	def getInput(self):
+		
+		tela = self.tela
+	
+		if tela == "Start":
+			success, arg = self.gui.getAction(tela)
+			if success:
+				if arg == 'connect':
+					#TODO: TRY TO CONNECT TO SERVER HERE
+					# IF SUCCEDED: self.tela = "Connected"
+					self.tela = 'Connected'
+					pass
+				elif arg == 'options':
+					self.tela = 'Options'
+			
+		elif tela == "Connected":
+			if (self.writeTurn):
 				self.writeTurn = False
+				#ver se existe alguma acao requisitada pressionada
+				success, arg = self.gui.getAction('Connected')
+				if (success):
+
+					self.msg.mapKeyToData(arg)
+				else:
+					self.msg.forceStop()
 			else:
-				self.msg.anyInfo()
 				self.writeTurn = True
-		else:
-			if PRINT:
-				print()
-			self.msg.anyInfo()
-			self.writeTurn = True
+				self.msg.anyInfo()
+			
+		elif tela == "Options":
+			#TODO:
+			success, arg = self.gui.getAction(tela)
+			if success:
+				if arg == 27:
+					self.tela = 'Start'
+				
 
 	def sendMsg(self):
 		self.conex.sendMsg(self.msg)
@@ -173,35 +198,34 @@ class Client():
 		respVal = respData[1:3]
 		self.db.store(respI, respVal)
 
-	def dispResp(self):
-		if PRINT:
-			print('Received: ' + str(self.resp))
-			print(self.db)
 
 	def main(self):
-	 
+	
 		while (True):
 
-			self.gui.drawAll(self.db.state)
+			self.gui.update(self.tela, self.db.state)
 			
-			#getMsg (inputs -> msg)
-			self.getMsg()
+			# Le o input do usu?rio (tambem considera uma possibilidade n?o haver nenhum)
+			# 
+			self.getInput() # processa inputs
 
 			tic = time()
 			
-			#sendMsg (msg -> )
-			self.sendMsg()
-
-			#getResp (server -> resp)
-			self.getResp()
+			if self.tela == "Connected":
 			
-			toc = time()
+				#sendMsg (msg -> )
+				self.sendMsg()
+				
+				print(self.msg)
 
-			ping = 1000*(toc-tic)
-			self.db.state['ping'] = ping
-			
-			#dispResp (print resp)
-			self.dispResp()
+				#getResp (server -> resp)
+				self.getResp()
+				
+				toc = time()
+
+				ping = 1000*(toc-tic)
+				self.db.state['ping'] = ping
+
 
 
 if __name__ == "__main__":
