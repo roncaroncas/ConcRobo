@@ -189,7 +189,7 @@ class Ping(pygame.sprite.Sprite):
 		#Reduzir a velocidade de print
 		self.sum += arg
 		self.i += 1
-		if self.i == 10:
+		if self.i == 5:
 			self.ping = self.sum/10
 			self.sum = 0
 			self.i = 0
@@ -212,8 +212,7 @@ class Move(pygame.sprite.Sprite):
 				name: pygame.image.load("./img/"+folderName+"/{}.jpeg".format(name)).convert()
 				for name in imgNames
 				}
-
-				
+		
 		#SETTING POSITION
 		self.pos = pos
 		
@@ -459,7 +458,7 @@ class Pressure(pygame.sprite.Sprite):
 		
 	def update(self, params):
 	
-		arg = params['ping']
+		arg = params['pressure']
 	
 		#SELECTOR distance
 		
@@ -525,7 +524,7 @@ class Battery(pygame.sprite.Sprite):
 		
 	def update(self, params):
 	
-		arg = params['ping']
+		arg = params['battery']
 	
 		#CHOOSING IMAGE:
 		Bmin = 0
@@ -559,7 +558,7 @@ class Distance(pygame.sprite.Sprite):
 		
 	def update(self, params):
 	
-		arg = params['ping']
+		arg = params['distance']
 	
 		#GET AND BLIT TEXT
 		label = FONT.render('Distance: {:4.1f} m'.format(arg), 1, (0,0,0))
@@ -580,12 +579,11 @@ class Velocity(pygame.sprite.Sprite):
 		
 	def update(self, params):
 	
-		arg = params['ping']
+		arg = params['velocity']
 	
 		#GET AND BLIT TEXT
 		label = FONT.render('Velocity: {:4.1f} m/s'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))				
-
 
 class OptionSprites(pygame.sprite.Group):
 	def __init__(self):
@@ -596,7 +594,6 @@ class OptionSprites(pygame.sprite.Group):
 		
 		self.buttons = {
 		}
-
 		
 class GUI:
 	def __init__(self):
@@ -606,7 +603,9 @@ class GUI:
 		self.screen = SCREEN
 
 		#definindo o periodo de repetição de key_down
-		pygame.key.set_repeat(1)
+		pygame.key.set_repeat(1,1)
+		#print(pygame.key.get_repeat())
+
 
 		#definindo a fonte dos textos
 		myfont = pygame.font.SysFont("arial", 15)
@@ -624,7 +623,9 @@ class GUI:
 		pygame.display.update()
 
 	def getAction(self, tela): #Gets if any key is pressed and what key
-	
+			
+		clickedButton = ""
+		
 		for event in pygame.event.get():
 		
 			if event.type == pygame.QUIT:
@@ -637,32 +638,26 @@ class GUI:
 					pos = pygame.mouse.get_pos()
 					for button in self.startSprites.buttons:
 						if self.startSprites.buttons[button].collidepoint(pos):
-							print("You clicked: ", button)
-							return (True, button)						
+							clickedButton = button						
 			
 			
 			elif tela == "Connected":
-				if event.type == pygame.KEYDOWN:
-					return (True, int(event.key))
-				elif event.type == pygame.MOUSEBUTTONDOWN:
+				if event.type == pygame.MOUSEBUTTONDOWN:
 					pos = pygame.mouse.get_pos()
 					for button in self.connectedSprites.buttons:
 						if self.connectedSprites.buttons[button].collidepoint(pos):
-							print("You clicked: ", button)
-							return (False, button)						
-			
+							clickedButton = button							
 			
 			elif tela == "Options":
-				if event.type == pygame.KEYDOWN:
-					return (True, int(event.key))
-				elif event.type == pygame.MOUSEBUTTONDOWN:
+				if event.type == pygame.MOUSEBUTTONDOWN:
 					pos = pygame.mouse.get_pos()
 					for button in self.connectedSprites.buttons:
 						if self.connectedSprites.buttons[button].collidepoint(pos):
-							print("You clicked: ", button)
-							return (False, button)						
+							clickedButton = button			
+
+		keys = pygame.key.get_pressed()
 		
-		return (False, 0)	
+		return (keys, clickedButton)								
 		
 	def update(self, tela, params={}):
 			

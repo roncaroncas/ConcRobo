@@ -1,4 +1,5 @@
 import math
+from config import *
 
 def accelToAngle(x, y, z):
 	#CONVENCAO: A frente do carrinho aponta na mesma direção do eixo Y, a parte superior aponta para o eixo Z.
@@ -29,3 +30,11 @@ def accelToAngle(x, y, z):
 #	print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
 
 	return (angleX, angleY, angleZ)
+	
+def keysBoolToKeysVect(keysBool):
+	keyVect = []
+	for keyName in KEYS:
+		key = KEYS[keyName]
+		if keysBool[key] == 1:
+			keyVect.append(key)
+	return keyVect

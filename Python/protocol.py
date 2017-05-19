@@ -24,18 +24,18 @@ class Message(Protocol):
 		#Return a list of actions in protocol format
 
 		map = {
-		UP_LEFT_KEY: b'\x07', #Q
-		UP_KEY: b'\x00', #W
-		UP_RIGHT_KEY: b'\x01', #E
-		LEFT_KEY:  b'\x06', #A
-		STOP_KEY: b'\x08', #S
-		RIGHT_KEY: b'\x02', #D
-		DOWN_LEFT_KEY: b'\x05', #Z
-		DOWN_KEY: b'\x04', #X
-		DOWN_RIGHT_KEY:  b'\x03', #C
+		KEYS['UP_LEFT']: b'\x07', #Q
+		KEYS['UP']: b'\x00', #W
+		KEYS['UP_RIGHT']: b'\x01', #E
+		KEYS['LEFT']:  b'\x06', #A
+		KEYS['STOP']: b'\x08', #S
+		KEYS['RIGHT']: b'\x02', #D
+		KEYS['DOWN_LEFT']: b'\x05', #Z
+		KEYS['DOWN']: b'\x04', #X
+		KEYS['DOWN_RIGHT']:  b'\x03', #C
 
-		PLUS_LIGHT_KEY: b'\x16', # O (or click)
-		MINUS_LIGHT_KEY: b'\x17', # P (or click)
+		KEYS['PLUS_LIGHT']: b'\x16', # O (or click)
+		KEYS['MINUS_LIGHT']: b'\x17', # P (or click)
 		}
 		
 		if key in map:
@@ -52,7 +52,7 @@ class Response(Protocol):
 	
 	def __init__(self):
 		self.head = HEADCHAR + HEADCHAR
-		self.data = b'\x00' + b'\x00'
+		self.data = b'\x00' + b'\x00' + b'\x00'
 		self.end = ENDCHAR + ENDCHAR
 		
 	def setData(self, data):

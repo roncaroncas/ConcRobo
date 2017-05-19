@@ -2,7 +2,7 @@ from time import sleep, time
 from gui import GUI
 from network import Ethernet, Serial, FakeConnect
 from protocol import Message, Response
-from utils import accelToAngle
+from utils import *
 from config import *
 
 class DataBase():
@@ -146,27 +146,26 @@ class Client():
 		
 		tela = self.tela
 	
+		keysBool, clickedButton = self.gui.getAction(tela)
+		keys = keysBoolToKeysVect(keysBool)
+		
+		#print(keys)
+		#print(self.tela)
+	
 		if tela == "Start":
-			success, arg = self.gui.getAction(tela)
-			if success:
-				if arg == 'connect':
-					#TODO: TRY TO CONNECT TO SERVER HERE
-					# IF SUCCEDED: self.tela = "Connected"
-					self.tela = 'Connected'
-					pass
-				elif arg == 'options':
-					self.tela = 'Options'
+			if clickedButton == 'connect':
+				#TODO: TRY TO CONNECT TO SERVER HERE
+				# IF SUCCEDED: self.tela = "Connected"
+				self.tela = 'Connected'
+			elif clickedButton == 'options':
+				self.tela = 'Options'
+				
 			
 		elif tela == "Connected":
 			if (self.writeTurn):
 				self.writeTurn = False
-				#ver se existe alguma acao requisitada pressionada
-				success, arg = self.gui.getAction('Connected')
-				if (success):
-
-					self.msg.mapKeyToData(arg)
-				else:
-					self.msg.forceStop()
+				if len(keys) > 0:
+					self.msg.mapKeyToData(keys[0])
 			else:
 				self.writeTurn = True
 				self.msg.anyInfo()
@@ -216,7 +215,7 @@ class Client():
 				#sendMsg (msg -> )
 				self.sendMsg()
 				
-				print(self.msg)
+				#print(self.msg)
 
 				#getResp (server -> resp)
 				self.getResp()
@@ -225,6 +224,8 @@ class Client():
 
 				ping = 1000*(toc-tic)
 				self.db.state['ping'] = ping
+				
+				print(self.resp)
 
 
 
