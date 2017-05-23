@@ -529,7 +529,7 @@ class Battery(pygame.sprite.Sprite):
 		#CHOOSING IMAGE:
 		Bmin = 0
 		Bmax = 100
-		numImgs = len(self.imgs)
+		numImgs = len(self.imgs)-1
 		
 		if arg == -1:
 			img = self.imgs['bat-1']
@@ -538,7 +538,7 @@ class Battery(pygame.sprite.Sprite):
 		elif arg < Bmax:
 			img = self.imgs['bat{:02}'.format(int((arg-Bmin)*numImgs/(Bmax-Bmin)))]
 		else:
-			img = self.imgs['bat{:02}'.format(numImgs-2)]
+			img = self.imgs['bat{:02}'.format(numImgs-1)]
 		
 		SCREEN.blit(img, img.get_rect(center=self.pos))
 		
@@ -546,7 +546,9 @@ class Battery(pygame.sprite.Sprite):
 		if arg == -1:
 			label = FONT.render('Battery:  ??.?%', 1, (0,0,0))
 		else:
-			label = FONT.render('Battery: {:3.0f}%'.format(arg), 1, (0,0,0))
+			#label = FONT.render('Battery: {:3.0f}%'.format(arg), 1, (0,0,0))
+			label = FONT.render('Battery: {:5.3f} V'.format(arg), 1, (0,0,0))
+		
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 												
 class Distance(pygame.sprite.Sprite):
@@ -663,7 +665,7 @@ class GUI:
 			
 		if tela == "Start":
 			self.screen.fill([220,220,220])
-			self.startSprites.update({'message': 'Test Message'})
+			self.startSprites.update(params)
 			pygame.display.update()
 		
 		elif tela == "Connected":

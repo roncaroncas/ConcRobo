@@ -72,11 +72,25 @@ class Ethernet():
 
 	def __init__(self):
 		self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-		print('Connecting to {}:{} ...'.format(IP,PORT))
 		self.sock.settimeout(5)
-		self.sock.connect((IP, PORT))
-		print('Connected')
+		
+	def connect(self):
+		try:
+			self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.sock.settimeout(5)
+			print('Connecting to {}:{} ...'.format(IP,PORT))
+			self.sock.connect((IP, PORT))
+			print('Connected')
+			return True
+		except:
+			print('Connection failed!')
+			return False
+			
+		
+	def disconnect(self):
+		print('Connection Closed!')
+		self.sock.close()
+		return True
 
 	def sendMsg(self,msg):
 		self.sock.sendall(msg.toProtocol())
@@ -99,12 +113,16 @@ class Ethernet():
 			i = j
 		  
 #TODO: VERIFICAR SE SERIAL ESTÁ FUNCIONANDO, AINDA NAO FOI DEBUGADO!!
+#ESTA DESATUALIZADO!
 class Serial():
 
 	def __init__(self):
 		print('Connecting...')
 		self.ser = serial.Serial(COM_PORT, 9600, timeout=4)
 		print('Connected')
+		
+	def connect (self):
+		pass
 
 	def sendMsg(self,msg):
 		self.ser.write(msg.toProtocol())
@@ -118,6 +136,9 @@ class FakeConnect():
 
 	def __init__(self):
 		print('Fake Connected')
+		
+	def connect(self):
+		return True
 
 	def sendMsg(self,msg):
 		#print("Sent fake msg")

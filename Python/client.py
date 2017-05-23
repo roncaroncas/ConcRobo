@@ -7,6 +7,8 @@ from config import *
 
 class DataBase():
 	def __init__(self):
+	
+		self.t = time()
 				
 		self.state = {
 				'lastMove': 	"STOP",		# String
@@ -15,31 +17,34 @@ class DataBase():
 				'accelY' :		0,			# g
 				'accelZ' :		1,			# g
 				
-				'angleX' : 		0,			# º
-				'angleY' : 		0,			# º
+				'angleX' : 		0,			# ?
+				'angleY' : 		0,			# ?
 				
 				'light':		100,		# %
-				'temperature': 	-1, 		# ºC
+				'temperature': 	-1, 		# ?C
 				'pressure':		-1, 		# Pa
 				'battery': 		-1,			# %
 
-				'distance':		0,			#TODO
-				'velocity': 	0,			#TODO
+				'distance':		0,			# TODO
+				'velocity': 	0,			# TODO
+				'angleDir':		0,			# ?
 				
 				'ping':			0,
+				
+				'message':		"",
 				}	
 					
 		self.map = {
 				
-				b'\x00': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'N'		},
-				b'\x01': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'NE'	},
-				b'\x02': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'E'		},
-				b'\x03': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'SE'	},
-				b'\x04': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'S'		},
-				b'\x05': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'SO'	},
-				b'\x06': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'O'		},
-				b'\x07': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'NO'	},
-				b'\x08': {'pointTo': 'lastMove',	'setter': 'setValue',		'value':'STOP'	},
+				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': 0.1005 , 'w': 0},
+				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': 0 , 'w': 0},
+				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 'w': 0},
+				b'\x03': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SE'	,	'vel': 0 , 'w': 0},
+				b'\x04': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'S'		,	'vel': -0.1005 , 'w': 0},
+				b'\x05': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SO'	,	'vel': 0 , 'w': 0},
+				b'\x06': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'O'		,	'vel': 0 , 'w': 0},
+				b'\x07': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NO'	,	'vel': 0 , 'w': 0},
+				b'\x08': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'STOP'	,	'vel': 0 , 'w': 0},
 				
 				b'\x10': {'pointTo': 'accelX',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},			
 				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},		
@@ -47,7 +52,7 @@ class DataBase():
 				
 				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': 1.},			
 				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': 1.},	
-				b'\x15': {'pointTo': 'battery',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
+				b'\x15': {'pointTo': 'battery',		'setter': 'ABK',			'A': 0.028571, 	'B': 0., 	'K': .5},
 				
 				b'\x16': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca vai entrar nessa linha
 				b'\x17': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca via entrar nessa linha
@@ -74,9 +79,17 @@ class DataBase():
 		stateToChange = self.map[indice]['pointTo']
 		setter = self.map[indice]['setter']
 		
-		if setter == 'setValue':
+		if setter == 'setMoveValue':
 			#Replace value with set value
-			self.state[stateToChange] = self.map[indice]['value']
+			now = time()
+			deltaT = now - self.t
+			self.t = now			
+			
+			self.state['distance'] += deltaT*self.state['velocity']
+			self.state['velocity'] = self.map[indice]['vel']
+			self.state['lastMove'] = self.map[indice]['value']
+			
+			
 			
 		elif setter == 'ABK':
 			#newValue = (K)*(A*valueInByte + B) + (1-K)*oldValue
@@ -149,14 +162,17 @@ class Client():
 		keysBool, clickedButton = self.gui.getAction(tela)
 		keys = keysBoolToKeysVect(keysBool)
 		
+		
 		#print(keys)
 		#print(self.tela)
 	
 		if tela == "Start":
 			if clickedButton == 'connect':
-				#TODO: TRY TO CONNECT TO SERVER HERE
-				# IF SUCCEDED: self.tela = "Connected"
-				self.tela = 'Connected'
+				if self.conex.connect():
+					self.tela = 'Connected'
+					self.db.state['message'] = ''
+				else:
+					self.db.state['message'] = 'Connection Fail!'
 			elif clickedButton == 'options':
 				self.tela = 'Options'
 				
@@ -165,6 +181,10 @@ class Client():
 			if (self.writeTurn):
 				self.writeTurn = False
 				if len(keys) > 0:
+					if keys[0] == KEYS['ESCAPE']:
+						self.conex.disconnect()
+						self.tela = 'Start'
+						return
 					self.msg.mapKeyToData(keys[0])
 			else:
 				self.writeTurn = True
@@ -225,7 +245,8 @@ class Client():
 				ping = 1000*(toc-tic)
 				self.db.state['ping'] = ping
 				
-				print(self.resp)
+				if self.resp:
+					print(self.resp)
 
 
 

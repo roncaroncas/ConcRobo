@@ -18,7 +18,9 @@ KEYS = {
 'DOWN_RIGHT' : 99,
 
 'PLUS_LIGHT' : 111,
-'MINUS_LIGHT' : 112,		
+'MINUS_LIGHT' : 112,	
+
+'ESCAPE': 27,	
 }
 
 
@@ -38,3 +40,16 @@ PORT = 23
 
 #SERIAL:
 COM_PORT = "com3"
+
+#MOVEMENT CONSTANTS:
+## Movimento Reto:
+Krvel = 	0.1005 	#m/s
+## Movimento Diagonal 
+Kdvel = 	0 		# º/s
+Kdraio = 	0 		# m
+## Movimento Eixo
+Kevel = 	0 		# º/s
+Keraio = 	0 		# m
+
+
+
