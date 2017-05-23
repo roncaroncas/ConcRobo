@@ -4,6 +4,7 @@
 #include <SFE_MMA8452Q.h> // Includes the SFE_MMA8452Q library
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
+#include <SerialRelay.h> // Include Serial Relay
 
 // Network
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -28,6 +29,7 @@ boolean newResp = false;
 byte lastOrder = 0x08;
 int deltaTime = 1000; //milliseconds
 unsigned long tLim = 1000000000;
+unsigned long tLastConnect = 1000000000;
 unsigned long tic;
 
 //Message variables
@@ -44,16 +46,17 @@ byte headByte = 0xFD;
 byte endByte = 0xFE;
 
 // Relays variables
-boolean relA = false; // true=Vcc, false=Gnd
-boolean relB = false;
-boolean relC = false;
-boolean relD = false;
+boolean rel[] = {false, false, false, false};
+//boolean relA = false; // true=Vcc, false=Gnd
+//boolean relB = false;
+//boolean relC = false;
+//boolean relD = false;
 
-// Pinos do relé  = (10, 11, 12, 13) -- Ajustar conforme necessidade
-int pinRelA = 4;
-int pinRelB = 5;
-int pinRelC = 6;
-int pinRelD = 7;
+// Pinos do relé  = (4 (data) e 5 (clock))
+SerialRelay relay(4,5,1); // (data, clock, number of modules)
+
+// Pino do sensor de tensão:
+int AnalogPin = 0;
 
 void setup() {
 
@@ -76,12 +79,15 @@ void setup() {
   }
   Serial.println("BMP ready");
 
+  
   // Inicializando pinos do relé
   //Pinos do relé
-  pinMode(pinRelA, OUTPUT);
-  pinMode(pinRelB, OUTPUT);
-  pinMode(pinRelC, OUTPUT);
-  pinMode(pinRelD, OUTPUT);
+  relay.Info(&Serial,BIN); // for debugging
+  
+  //pinMode(pinRelA, OUTPUT);
+  //pinMode(pinRelB, OUTPUT);
+  //pinMode(pinRelC, OUTPUT);
+  //pinMode(pinRelD, OUTPUT);
   Serial.println("Relays ready");
 
   delay(1000); //espera 0,2 segundos para estabilizar conexao
@@ -127,6 +133,8 @@ void loop() {
   }
 
   keepMoving(); //verifica a partir das variaveis de controle e do timeLeft se ja devem parar
+
+  closeServer(); //
 }
 
 
@@ -144,6 +152,7 @@ void readFromClient() {
 
   // SE O CLIENT ENVIOU ALGUMA INFORMAÇÃO
   if (client.available() > 0) {
+    tLastConnect = millis();
     byte b = client.read();
     //Serial.println(b);
     if (b == headByte) {
@@ -288,8 +297,13 @@ void getAnalogicResp() {
 
     //0x15: Battery     -------------  TODO
     case 0x15:
-      val1 = 0xFF;
-      val2 = 0xFF;
+    
+      value = analogRead(analogPin);
+      //value = 1000;
+      val1 = byte(value / 256);
+      val2 = byte(value % 256);
+      //Serial.println("Voltage value: ," + String(value));
+      
       break;
 
     //0x16: Light -    --------------- TODO
@@ -348,7 +362,7 @@ void keepMoving() {
     lastOrder = 0x08;
     stopReles();
     priorityMsg = 0x08;
-    Serial.println("Move time out!");
+    //Serial.println("Move time out!");
   }
 }
 
@@ -357,115 +371,109 @@ void keepMoving() {
 void setReles() {
 
   switch (msgData) {
-
     //UP
     case 0x00 :
-      relA = true;
-      relB = false;
-      relC = true;
-      relD = false;
+      Serial.println("Indo para frente!");
+      updateRelay(1,true);
+      updateRelay(2,false);
+      updateRelay(3,true);
+      updateRelay(4,false);
       break;
 
     //UP_RIGHT
     case 0x01 :
-      relA = true;
-      relB = false;
-      relC = false;
-      relD = false;
+      updateRelay(1,true);
+      updateRelay(2,false);
+      updateRelay(3,false);
+      updateRelay(4,false);
       break;
 
     //RIGHT
-    case 0x02 :
-      relA = false;
-      relB = true;
-      relC = true;
-      relD = false;
+    case 0x02 :    
+      updateRelay(1,false);
+      updateRelay(2,true);
+      updateRelay(3,true);
+      updateRelay(4,false);
       break;
 
     //DOWN_RIGHT
     case 0x03 :
-      relA = false;
-      relB = false;
-      relC = false;
-      relD = true;
+      updateRelay(1,false);
+      updateRelay(2,false);
+      updateRelay(3,false);
+      updateRelay(4,true);
       break;
 
     //DOWN
     case 0x04 :
-      relA = false;
-      relB = true;
-      relC = false;
-      relD = true;
+      Serial.println("Indo para Tras!");
+      updateRelay(1,false);
+      updateRelay(2,true);
+      updateRelay(3,false);
+      updateRelay(4,true);
       break;
 
     //DOWN_LEFT
     case 0x05 :
-      relA = false;
-      relB = true;
-      relC = false;
-      relD = false;
+      updateRelay(1,false);
+      updateRelay(2,true);
+      updateRelay(3,false);
+      updateRelay(4,false);
       break;
 
     //LEFT
     case 0x06 :
-      relA = true;
-      relB = false;
-      relC = false;
-      relD = true;
+      updateRelay(1,true);
+      updateRelay(2,false);
+      updateRelay(3,false);
+      updateRelay(4,true);
       break;
 
     //UP_LEFT
     case 0x07 :
-      relA = false;
-      relB = false;
-      relC = true;
-      relD = false;
+      updateRelay(1,false);
+      updateRelay(2,false);
+      updateRelay(3,true);
+      updateRelay(4,false);
       break;
 
     //STOP
     case 0x08:
-      relA = false;
-      relB = false;
-      relC = false;
-      relD = false;
+    
+      Serial.println("Parando por comando!");
+      updateRelay(1,false);
+      updateRelay(2,false);
+      updateRelay(3,false);
+      updateRelay(4,false);
       break;
   }
-  updateReles();
 }
 
 void stopReles() {
-  relA = false;
-  relB = false;
-  relC = false;
-  relD = false;
-  updateReles();
+  
+  Serial.println("Parando por timeout!");
+  updateRelay(1,false);
+  updateRelay(2,false);
+  updateRelay(3,false);
+  updateRelay(4,false);
 }
 
-void updateReles() {
-
-  //TEMP
-  if (relA == true) {
-    digitalWrite(pinRelA, HIGH);
-  } else {
-    digitalWrite(pinRelA, LOW);
+void updateRelay(int numRelay, boolean ligar){
+  delay(5);
+  if (rel[numRelay-1] == false && ligar == true){
+    rel[numRelay-1] = true;
+    relay.SetRelay(numRelay, SERIAL_RELAY_ON, 1);
   }
-
-  if (relB == true) {
-    digitalWrite(pinRelB, HIGH);
-  } else {
-    digitalWrite(pinRelB, LOW);
+  else if (rel[numRelay-1] == true && ligar == false){
+    rel[numRelay-1] = false;
+    relay.SetRelay(numRelay, SERIAL_RELAY_OFF, 1);
   }
-
-  if (relC == true) {
-    digitalWrite(pinRelC, HIGH);
-  } else {
-    digitalWrite(pinRelC, LOW);
-  }
-
-  if (relD == true) {
-    digitalWrite(pinRelD, HIGH);
-  } else {
-    digitalWrite(pinRelD, LOW);
-  }
-
 }
+
+void closeServer() {
+  if ((millis() - tLastConnect) > 5000){
+    Serial.println("Client Timeout!");
+    client.stop();
+  }
+}
+
