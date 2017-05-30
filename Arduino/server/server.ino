@@ -382,9 +382,9 @@ void setReles() {
 
     //UP_RIGHT
     case 0x01 :
-      updateRelay(1,true);
+      updateRelay(1,false);
       updateRelay(2,false);
-      updateRelay(3,false);
+      updateRelay(3,true);
       updateRelay(4,false);
       break;
 
@@ -431,9 +431,9 @@ void setReles() {
 
     //UP_LEFT
     case 0x07 :
-      updateRelay(1,false);
+      updateRelay(1,true);
       updateRelay(2,false);
-      updateRelay(3,true);
+      updateRelay(3,false);
       updateRelay(4,false);
       break;
 

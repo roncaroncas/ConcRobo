@@ -2,7 +2,7 @@ import pygame
 
 pygame.init()
 
-pygame.display.set_caption('Robo')
+pygame.display.set_caption('Zinho')
 
 #Initialize Surface
 SCREEN = pygame.display.set_mode((300,600))
@@ -67,7 +67,7 @@ class Title(pygame.sprite.Sprite):
 		
 		#GET AND BLIT CONCREMAT
 		font = pygame.font.SysFont("monospace", 22)
-		label = font.render('Robo', 1, (0,0,0))
+		label = font.render('Zinho 1.0', 1, (0,0,0))
 		SCREEN.blit(label, label.get_rect(center=[self.pos[0], self.pos[1]+100]))
 			
 class Message(pygame.sprite.Sprite):
@@ -631,9 +631,7 @@ class GUI:
 		for event in pygame.event.get():
 		
 			if event.type == pygame.QUIT:
-				#TODO:
-				#Sair do programa sem Error
-				pygame.quit()
+				clickedButton = 'quit'
 			
 			elif tela == "Start":
 				if event.type == pygame.MOUSEBUTTONDOWN:

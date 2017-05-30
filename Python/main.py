@@ -14,8 +14,8 @@ class DataBase():
 				'lastMove': 	"STOP",		# String
 				
 				'accelX' :		0,			# g
-				'accelY' :		0,			# g
-				'accelZ' :		1,			# g
+				'accelY' :		-1,			# g
+				'accelZ' :		0,			# g
 				
 				'angleX' : 		0,			# ?
 				'angleY' : 		0,			# ?
@@ -46,9 +46,9 @@ class DataBase():
 				b'\x07': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NO'	,	'vel': 0 , 'w': 0},
 				b'\x08': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'STOP'	,	'vel': 0 , 'w': 0},
 				
-				b'\x10': {'pointTo': 'accelX',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},			
-				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},		
-				b'\x12': {'pointTo': 'accelZ',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .8},	
+				b'\x10': {'pointTo': 'accelX',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},			
+				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},		
+				b'\x12': {'pointTo': 'accelZ',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},	
 				
 				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': 1.},			
 				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': 1.},	
@@ -156,46 +156,56 @@ class Client():
 		
 		
 	def getInput(self):
-		
-		tela = self.tela
-	
-		keysBool, clickedButton = self.gui.getAction(tela)
+			
+		keysBool, clickedButton = self.gui.getAction(self.tela)
 		keys = keysBoolToKeysVect(keysBool)
-		
 		
 		#print(keys)
 		#print(self.tela)
 	
-		if tela == "Start":
+		if clickedButton == 'quit':
+			return False
+	
+		if self.tela == "Start":
 			if clickedButton == 'connect':
+				self.db.state['message'] = 'Connecting...'
+				self.gui.update(self.tela, self.db.state)
 				if self.conex.connect():
 					self.tela = 'Connected'
 					self.db.state['message'] = ''
+					return True
 				else:
 					self.db.state['message'] = 'Connection Fail!'
+					return True
 			elif clickedButton == 'options':
 				self.tela = 'Options'
-				
+				return True
 			
-		elif tela == "Connected":
+		elif self.tela == "Connected":
 			if (self.writeTurn):
 				self.writeTurn = False
 				if len(keys) > 0:
-					if keys[0] == KEYS['ESCAPE']:
+					arg = keys[0]
+					if arg == KEYS['ESCAPE']:
 						self.conex.disconnect()
 						self.tela = 'Start'
-						return
-					self.msg.mapKeyToData(keys[0])
+						return True
+					self.msg.mapKeyToData(arg)
+					return True
 			else:
 				self.writeTurn = True
 				self.msg.anyInfo()
+				return True
 			
-		elif tela == "Options":
-			#TODO:
-			success, arg = self.gui.getAction(tela)
-			if success:
-				if arg == 27:
+		elif self.tela == "Options":
+			if len(keys) > 0:
+				arg = keys[0]
+				if arg == KEYS['ESCAPE']:
+					self.conex.disconnect()
 					self.tela = 'Start'
+					return True
+					
+		return True
 				
 
 	def sendMsg(self):
@@ -220,13 +230,17 @@ class Client():
 
 	def main(self):
 	
-		while (True):
+		cont = True
+	
+		while (cont):
 
 			self.gui.update(self.tela, self.db.state)
 			
 			# Le o input do usu?rio (tambem considera uma possibilidade n?o haver nenhum)
-			# 
-			self.getInput() # processa inputs
+			
+			cont = self.getInput() # processa inputs
+			
+			#print(cont)
 
 			tic = time()
 			
@@ -247,7 +261,9 @@ class Client():
 				
 				if self.resp:
 					print(self.resp)
-
+					
+			if not (cont):
+				self.conex.disconnect()
 
 
 if __name__ == "__main__":
