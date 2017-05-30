@@ -19,23 +19,23 @@ class Message(Protocol):
 	def forceStop(self):
 		self.data = b'\x08'
 
-	def mapKeyToData(self,key):
+	def key2data(self,key):
 		#Gets a key
 		#Return a list of actions in protocol format
 
 		map = {
-		KEYS['UP_LEFT']: b'\x07', #Q
-		KEYS['UP']: b'\x00', #W
-		KEYS['UP_RIGHT']: b'\x01', #E
-		KEYS['LEFT']:  b'\x06', #A
-		KEYS['STOP']: b'\x08', #S
-		KEYS['RIGHT']: b'\x02', #D
-		KEYS['DOWN_LEFT']: b'\x05', #Z
-		KEYS['DOWN']: b'\x04', #X
-		KEYS['DOWN_RIGHT']:  b'\x03', #C
+		'UP_LEFT': b'\x07', #Q
+		'UP': b'\x00', #W
+		'UP_RIGHT': b'\x01', #E
+		'LEFT':  b'\x06', #A
+		'STOP': b'\x08', #S
+		'RIGHT': b'\x02', #D
+		'DOWN_LEFT': b'\x05', #Z
+		'DOWN': b'\x04', #X
+		'DOWN_RIGHT':  b'\x03', #C
 
-		KEYS['PLUS_LIGHT']: b'\x16', # O (or click)
-		KEYS['MINUS_LIGHT']: b'\x17', # P (or click)
+		'PLUS_LIGHT': b'\x16', # O (or click)
+		'MINUS_LIGHT': b'\x17', # P (or click)
 		}
 		
 		if key in map:

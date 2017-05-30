@@ -31,10 +31,10 @@ def accelToAngle(x, y, z):
 
 	return (-angleX, -angleY-90, angleZ)
 	
-def keysBoolToKeysVect(keysBool):
+def keysBool2key(keysBool):
 	keyVect = []
 	for keyName in KEYS:
 		key = KEYS[keyName]
 		if keysBool[key] == 1:
-			keyVect.append(key)
-	return keyVect
+			return(keyName)
+	return None

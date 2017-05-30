@@ -1,133 +1,11 @@
 from time import sleep, time
+from state import State
 from gui import GUI
 from network import Ethernet, Serial, FakeConnect
 from protocol import Message, Response
+from database import DataBase
 from utils import *
 from config import *
-
-class DataBase():
-	def __init__(self):
-	
-		self.t = time()
-				
-		self.state = {
-				'lastMove': 	"STOP",		# String
-				
-				'accelX' :		0,			# g
-				'accelY' :		-1,			# g
-				'accelZ' :		0,			# g
-				
-				'angleX' : 		0,			# ?
-				'angleY' : 		0,			# ?
-				
-				'light':		100,		# %
-				'temperature': 	-1, 		# ?C
-				'pressure':		-1, 		# Pa
-				'battery': 		-1,			# %
-
-				'distance':		0,			# TODO
-				'velocity': 	0,			# TODO
-				'angleDir':		0,			# ?
-				
-				'ping':			0,
-				
-				'message':		"",
-				}	
-					
-		self.map = {
-				
-				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': 0.1005 , 'w': 0},
-				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': 0 , 'w': 0},
-				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 'w': 0},
-				b'\x03': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SE'	,	'vel': 0 , 'w': 0},
-				b'\x04': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'S'		,	'vel': -0.1005 , 'w': 0},
-				b'\x05': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SO'	,	'vel': 0 , 'w': 0},
-				b'\x06': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'O'		,	'vel': 0 , 'w': 0},
-				b'\x07': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NO'	,	'vel': 0 , 'w': 0},
-				b'\x08': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'STOP'	,	'vel': 0 , 'w': 0},
-				
-				b'\x10': {'pointTo': 'accelX',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},			
-				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},		
-				b'\x12': {'pointTo': 'accelZ',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},	
-				
-				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': 1.},			
-				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': 1.},	
-				b'\x15': {'pointTo': 'battery',		'setter': 'ABK',			'A': 0.028571, 	'B': 0., 	'K': .5},
-				
-				b'\x16': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca vai entrar nessa linha
-				b'\x17': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca via entrar nessa linha
-				b'\x18': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
-				
-				b'\x19': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': 0.},
-				
-				b'\x20': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': .8},	
-			}
-
-	def __str__(self):
-	
-		s = 'DataBase:\n' 
-		for indice in self.state:
-			value = self.state[indice]
-			s += str(indice) + ": " + str(value) +"\n"
-		return s
-		
-	def store(self, indice, bValue):
-
-		if not (indice in self.map):
-			return
-	
-		stateToChange = self.map[indice]['pointTo']
-		setter = self.map[indice]['setter']
-		
-		if setter == 'setMoveValue':
-			#Replace value with set value
-			now = time()
-			deltaT = now - self.t
-			self.t = now			
-			
-			self.state['distance'] += deltaT*self.state['velocity']
-			self.state['velocity'] = self.map[indice]['vel']
-			self.state['lastMove'] = self.map[indice]['value']
-			
-			
-			
-		elif setter == 'ABK':
-			#newValue = (K)*(A*valueInByte + B) + (1-K)*oldValue
-			
-			#Flag 
-			if bValue == b'\xff\xff':
-				return
-			
-			value = int.from_bytes(bValue, 'big')
-			memValue = self.state[stateToChange]
-			
-			A = self.map[indice]['A']
-			B = self.map[indice]['B']
-			if memValue == -1:
-				K = 1
-			else:
-				K = self.map[indice]['K']
-			
-			newValue = 	K*(A*value + B)	+ (1-K)*memValue	
-
-			self.state[stateToChange] = newValue
-			
-		elif setter == "accelABK":
-			#newValue = (K)*(A*valueInByte + B) + (1-K)*oldValue
-			#tambem atualiza o angulo
-		
-			value = int.from_bytes(bValue, 'big')
-			memValue = self.state[stateToChange]
-			A = self.map[indice]['A']
-			B = self.map[indice]['B']
-			K = self.map[indice]['K']
-			
-			newValue = 	K*(A*value + B)	+ (1-K)*memValue	
-			self.state[stateToChange] = newValue
-			
-			accelX, accelY, accelZ = self.state['accelX'], self.state['accelY'], self.state['accelZ']
-			angleX, angleY, _ = accelToAngle(accelX, accelY, accelZ)
-			self.state['angleX'], self.state['angleY'] = angleX, angleY
 	
 
 class Client():
@@ -147,6 +25,7 @@ class Client():
 		self.msg = Message()
 		self.resp = Response()
 		self.gui = GUI()
+		self.st = State()
 		self.db = DataBase()
 		
 		#VARIAVEL DE FLUXO: Alternar entre mandar write de client -> arduino e pedir read de client -> arduino
@@ -157,94 +36,112 @@ class Client():
 		
 	def getInput(self):
 			
-		keysBool, clickedButton = self.gui.getAction(self.tela)
-		keys = keysBoolToKeysVect(keysBool)
+		keysBool, clickedButton, flag = self.gui.getAction(self.tela)
+		key = keysBool2key(keysBool)
 		
-		#print(keys)
-		#print(self.tela)
+		print(self.tela, key, clickedButton, flag)
+		
+		#Flags
+		if flag == "quit":
+			self.tela = "Quit"
+			return
 	
-		if clickedButton == 'quit':
-			return False
-	
+		#START SCREEN
 		if self.tela == "Start":
-			if clickedButton == 'connect':
-				self.db.state['message'] = 'Connecting...'
-				self.gui.update(self.tela, self.db.state)
+			#MOUSE:
+			if clickedButton == "connect":
+				self.st.state['message'] = 'Connecting...'
+				self.gui.update(self.tela, self.st.state)
 				if self.conex.connect():
 					self.tela = 'Connected'
-					self.db.state['message'] = ''
-					return True
+					self.st.state['message'] = ''
+					return
 				else:
-					self.db.state['message'] = 'Connection Fail!'
-					return True
-			elif clickedButton == 'options':
-				self.tela = 'Options'
-				return True
+					self.st.state['message'] = 'Connection Fail!'
+					return
+			elif clickedButton == 'help':
+				self.tela = 'Help'
+				return
+			#KEYBOARD:
+				#EMPTY
 			
+		#CONNECTED SCREEN
 		elif self.tela == "Connected":
+			
+			#WRITE TURN:
 			if (self.writeTurn):
 				self.writeTurn = False
-				if len(keys) > 0:
-					arg = keys[0]
-					if arg == KEYS['ESCAPE']:
-						self.conex.disconnect()
-						self.tela = 'Start'
-						return True
-					self.msg.mapKeyToData(arg)
-					return True
+				#MOUSE:
+					#EMPTY
+				#KEYBOARD:
+				if key == 'ESCAPE':
+					self.conex.disconnect()
+					self.tela = 'Start'
+					return
+				else:
+					self.msg.key2data(key)
+					return
+			#READ TURN
 			else:
 				self.writeTurn = True
 				self.msg.anyInfo()
-				return True
+				return
 			
-		elif self.tela == "Options":
-			if len(keys) > 0:
-				arg = keys[0]
-				if arg == KEYS['ESCAPE']:
-					self.conex.disconnect()
-					self.tela = 'Start'
-					return True
-					
-		return True
+		#HELP SCREEN
+		elif self.tela == "Help":
+			#MOUSE:
+				#EMPTY
+			#KEYBOARD:
+			if key == 'ESCAPE':
+				self.conex.disconnect()
+				self.tela = 'Start'
+				return
 				
-
 	def sendMsg(self):
 		self.conex.sendMsg(self.msg)
 
 	def getResp(self):
-		#pega-se a resp da conexao
-		resp = self.conex.getResp()
+		#pega-se tem resp da conexao
+		success, resp = self.conex.getResp()
 		
-		#altera-se o valor de resp de acordo com o que foi recebido
-		self.resp.setData(resp)
+		if success:
+			#altera-se o valor de resp de acordo com o que foi recebido
+			self.resp.setData(resp)
 		
-		#guarda a resp no db
-		self.storeResp()
+			#guarda a resp no st
+			self.storeResp()
+		
+		else:
+			print("DISCONNECTING")
+			self.st.state['message'] = "Perda de Conexao"
+			self.conex.disconnect()
+			
+		return success
 
 	def storeResp(self):
 		respData = self.resp.data
 		respI = respData[0:1]
 		respVal = respData[1:3]
-		self.db.store(respI, respVal)
+		self.st.store(respI, respVal)
 
 
 	def main(self):
 	
-		cont = True
-	
-		while (cont):
+		while (self.tela != "Quit"):
+		
+			sleep(.10)
+			print(self.st)
 
-			self.gui.update(self.tela, self.db.state)
+			#Atualiza os gráficos
+			self.gui.update(self.tela, self.st.state)
 			
 			# Le o input do usu?rio (tambem considera uma possibilidade n?o haver nenhum)
+			self.getInput() # processa inputs
 			
-			cont = self.getInput() # processa inputs
-			
-			#print(cont)
-
-			tic = time()
 			
 			if self.tela == "Connected":
+				
+				tic = time()
 			
 				#sendMsg (msg -> )
 				self.sendMsg()
@@ -252,17 +149,20 @@ class Client():
 				#print(self.msg)
 
 				#getResp (server -> resp)
-				self.getResp()
+				success = self.getResp()
 				
 				toc = time()
 
 				ping = 1000*(toc-tic)
-				self.db.state['ping'] = ping
+				self.st.state['ping'] = ping
 				
-				if self.resp:
-					print(self.resp)
+				#if self.resp:
+				#	print(self.resp)
+				
+				flag = False
+				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], flag)
 					
-			if not (cont):
+			if (self.tela == "Quit"):
 				self.conex.disconnect()
 
 

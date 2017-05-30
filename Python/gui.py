@@ -17,18 +17,18 @@ class StartSprites(pygame.sprite.Group):
 		pygame.sprite.Group.__init__(self)
 		
 		connect = ConnectButton([150,400])
-		options = OptionButton([150,475])
+		help = HelpButton([150,475])
 	
 		self.add(
 			Title([150,80]),
 			Message([150, 225]),
 			connect,
-			options,
+			help,
 		)
 		
 		self.buttons = {
 			'connect': connect.rect,
-			'options': options.rect,
+			'help': help.rect,
 		}
 			
 class Title(pygame.sprite.Sprite):
@@ -115,13 +115,13 @@ class ConnectButton(pygame.sprite.Sprite):
 		img = self.imgs['Connect']
 		SCREEN.blit(img, img.get_rect(center=[self.pos[0], self.pos[1]]))
 		
-class OptionButton(pygame.sprite.Sprite):
+class HelpButton(pygame.sprite.Sprite):
 	def __init__(self, pos):
 		pygame.sprite.Sprite.__init__(self)
 		
 		#SETTING IMAGES
 		imgNames = [
-			'Options']
+			'Help']
 
 		folderName = 'start'
 
@@ -134,7 +134,7 @@ class OptionButton(pygame.sprite.Sprite):
 		self.pos = pos
 		
 		#SET RECT TO USE AS BUTTON
-		img = self.imgs['Options']
+		img = self.imgs['Help']
 		self.rect = img.get_rect(center=[self.pos[0], self.pos[1]])
 		
 		
@@ -142,10 +142,9 @@ class OptionButton(pygame.sprite.Sprite):
 	def update(self, _):
 		
 		#GET AND BLIT IMG
-		img = self.imgs['Options']
+		img = self.imgs['Help']
 		SCREEN.blit(img, img.get_rect(center=[self.pos[0], self.pos[1]]))
-		
-			
+					
 #########################
 		
 class ConnectedSprites (pygame.sprite.Group):
@@ -157,8 +156,9 @@ class ConnectedSprites (pygame.sprite.Group):
 		self.add(
 		Ping([0,0]),
 		Move([55,45]),
-		AngleX([15,115]),
-		AngleY([165,115]),
+		XYZ([170,35]),
+		AngleA([15,115]),
+		AngleB([165,115]),
 		light,
 		Temperature([20,335]),
 		Pressure([250,400]),
@@ -227,14 +227,37 @@ class Move(pygame.sprite.Sprite):
 		#UPDATE AND BLIT IMAGE
 		img = self.imgs[arg]
 		SCREEN.blit(img, img.get_rect(topleft=self.pos))
-
-class AngleX(pygame.sprite.Sprite):
+	
+class XYZ(pygame.sprite.Sprite):
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)
+		
+		#SET POSITION
+		self.pos = pos
+		
+	def update(self, params):
+	
+		x = params['x0']
+		y = params['y0']
+		z = params['z0']
+			
+		#GET AND BLIT TEXT
+		text = [
+			'X: {:6.2f} m'.format(x),
+			'Y: {:6.2f} m'.format(y),
+			'Z: {:6.2f} m'.format(z),
+			]
+		for i in range(len(text)):
+			label = FONT.render(text[i], 1, (0,0,0))
+			SCREEN.blit(label, (self.pos[0], self.pos[1]+i*17))	 
+				
+class AngleA(pygame.sprite.Sprite):
 	def __init__(self, pos):
 		pygame.sprite.Sprite.__init__(self)
 
 		#SETTING IMAGES
 		imgNames = [
-			'AngleBG', 'AngleX']
+			'AngleBG', 'AngleA']
 
 		folderName = 'angles'
 
@@ -257,27 +280,27 @@ class AngleX(pygame.sprite.Sprite):
 
 	def update(self, params):
 	
-		arg = params['angleX']
+		arg = params['angleA']
 	
 		#GET AND BLIT BACKGROUND
 		bg = self.imgs['AngleBG']
 		SCREEN.blit(bg, bg.get_rect(topleft=self.pos))
 		
 		#GET AND BLIT ROTATED IMAGE
-		img = pygame.transform.rotate(self.imgs['AngleX'],arg)
+		img = pygame.transform.rotate(self.imgs['AngleA'],arg)
 		SCREEN.blit(img, img.get_rect(center=[self.pos[0]+60,self.pos[1]+60]))
 		
 		#GET AND BLIT TEXT
-		label = FONT.render('Angle X: {:4.1f}º'.format(arg*1.0), 1, (0,0,0))
+		label = FONT.render('Angulo A: {:4.1f}º'.format(arg*1.0), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0], self.pos[1]+120))
 				
-class AngleY(pygame.sprite.Sprite):
+class AngleB(pygame.sprite.Sprite):
 	def __init__(self, pos):
 		pygame.sprite.Sprite.__init__(self)
 
 		#SETTING IMAGES
 		imgNames = [
-			'AngleBG', 'AngleY']
+			'AngleBG', 'AngleB']
 
 		folderName = 'angles'
 
@@ -300,18 +323,18 @@ class AngleY(pygame.sprite.Sprite):
 
 	def update(self, params):
 	
-		arg = params['angleY']
+		arg = params['angleB']
 		
 		#GET AND BLIT BACKGROUND
 		bg = self.imgs['AngleBG']
 		SCREEN.blit(bg, bg.get_rect(topleft=self.pos))
 		
 		#GET AND BLIT ROTATED IMAGE
-		img = pygame.transform.rotate(self.imgs['AngleY'],arg)
+		img = pygame.transform.rotate(self.imgs['AngleB'],arg)
 		SCREEN.blit(img, img.get_rect(center=[self.pos[0]+60,self.pos[1]+60]))
 		
 		#GET AND BLIT TEXT
-		label = FONT.render('Angle Y: {:4.1f}º'.format(arg*1.0), 1, (0,0,0))
+		label = FONT.render('Angulo B: {:4.1f}º'.format(arg*1.0), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0], self.pos[1]+120))
 
 class Light(pygame.sprite.Sprite):
@@ -421,9 +444,9 @@ class Temperature(pygame.sprite.Sprite):
 		
 		#GET AND BLIT TEXT
 		if arg == -1:
-			label = FONT.render('Temperature:   ??.?ºC', 1, (0,0,0))
+			label = FONT.render('Temperatura: ??.? ºC', 1, (0,0,0))
 		else:
-			label = FONT.render('Temperature: {:4.1f}ºC'.format(arg), 1, (0,0,0))
+			label = FONT.render('Temperatura: {:4.1f} ºC'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, self.pos)
 			
 class Pressure(pygame.sprite.Sprite):
@@ -486,9 +509,9 @@ class Pressure(pygame.sprite.Sprite):
 
 		#SET AND BLIT TEXT
 		if arg == -1:
-			label = FONT.render('Pressure: ?????.? Pa'.format(arg), 1, (0,0,0))
+			label = FONT.render('Pressão:  ?????.? Pa'.format(arg), 1, (0,0,0))
 		else:
-			label = FONT.render('Pressure: {:5.1f} Pa'.format(arg), 1, (0,0,0))
+			label = FONT.render('Pressão:  {:5.1f} Pa'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 		
 class Battery(pygame.sprite.Sprite):
@@ -513,10 +536,6 @@ class Battery(pygame.sprite.Sprite):
 
 		#SET POSITION
 		self.pos = pos
-		
-		#GET AND BLIT DEFAULT TEXT
-		label = FONT.render('Battery:  ??.?%', 1, (0,0,0))
-		#SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 		
 		#SET AND BLIT DEFAULT IMAGE
 		img = self.imgs['bat-1']		
@@ -544,10 +563,10 @@ class Battery(pygame.sprite.Sprite):
 		
 		#GET AND BLIT TEXT
 		if arg == -1:
-			label = FONT.render('Battery:  ??.?%', 1, (0,0,0))
+			label = FONT.render('Bateria:     ??.? %', 1, (0,0,0))
 		else:
-			#label = FONT.render('Battery: {:3.0f}%'.format(arg), 1, (0,0,0))
-			label = FONT.render('Battery: {:5.3f} V'.format(arg), 1, (0,0,0))
+			#label = FONT.render('Bateria: {:3.0f}%'.format(arg), 1, (0,0,0))
+			label = FONT.render('Bateria:   {:5.3f} V'.format(arg), 1, (0,0,0))
 		
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 												
@@ -563,7 +582,7 @@ class Distance(pygame.sprite.Sprite):
 		arg = params['distance']
 	
 		#GET AND BLIT TEXT
-		label = FONT.render('Distance: {:4.1f} m'.format(arg), 1, (0,0,0))
+		label = FONT.render('Distância:   {:4.1f} m'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 		
 class Velocity(pygame.sprite.Sprite):
@@ -584,18 +603,106 @@ class Velocity(pygame.sprite.Sprite):
 		arg = params['velocity']
 	
 		#GET AND BLIT TEXT
-		label = FONT.render('Velocity: {:4.1f} m/s'.format(arg), 1, (0,0,0))
+		label = FONT.render('Velocidade:  {:4.1f} m/s'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))				
 
-class OptionSprites(pygame.sprite.Group):
+#######################
+	
+class HelpSprites(pygame.sprite.Group):
 	def __init__(self):
 		pygame.sprite.Group.__init__(self)
 		
 		self.add(
+		MoveHelp([15,15]),
+		EscapeHelp([15,130]),
+		TextHelp([15,170]),
 		)
+			
+class MoveHelp(pygame.sprite.Sprite):
+	
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)	
 		
-		self.buttons = {
-		}
+		self.pos = pos
+
+	def update(self, params):
+		#GET AND BLIT TEXT
+		text = [
+			'Para mover, use as teclas:',
+			'',
+			'          Q W E',
+			'          A S D',
+			'          Z X C',
+			]
+		for i in range(len(text)):
+			label = FONT.render(text[i], 1, (0,0,0))
+			SCREEN.blit(label, (self.pos[0], self.pos[1]+i*17))	
+
+class EscapeHelp(pygame.sprite.Sprite):		
+
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)	
+		
+		self.pos = pos
+
+	def update(self, params):
+		#GET AND BLIT TEXT
+		text = [
+			'Para voltar, aperte ESC',
+			]
+		for i in range(len(text)):
+			label = FONT.render(text[i], 1, (0,0,0))
+			SCREEN.blit(label, (self.pos[0], self.pos[1]+i*17))	 
+
+class TextHelp(pygame.sprite.Sprite):		
+
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)	
+		
+		self.pos = pos
+		
+		#SETTING IMAGES
+		imgNames = [
+			'AngleBG', 'AngleA']
+
+		folderName = 'angles'
+
+		self.imgs      = {
+				name: pygame.image.load("./img/"+folderName+"/{}.jpeg".format(name)).convert()
+				for name in imgNames
+				}
+
+		#SETTING TRANSPARENCY TO IMAGES
+		for name in self.imgs:
+			self.imgs[name].set_colorkey((255,0,255))
+
+	def update(self, params):
+	
+		#GET AND BLIT TEXT
+		text = [
+			'Você deve monitorar o Zinho',
+			'e garantir condições seguras!',
+			'',			
+			'Você tem acesso a:',
+			' - Temperatura', 
+			' - Pressao',
+			' - Inclinação',
+			' - Bateria restante',
+			' - Velocidade aproximada',
+			' - Distancia percorrida ',
+			'',
+			'',
+			'Em relação a posição inicial, ',
+			'XYZ representam respectivamente:',
+			' - esquerda (-) ~ direita (+) ',
+			' - trás     (-) ~ frente  (+) ',
+			' - baixo    (-) ~ cima    (+) ',
+			
+			]
+		for i in range(len(text)):
+			label = FONT.render(text[i], 1, (0,0,0))
+			SCREEN.blit(label, (self.pos[0], self.pos[1]+i*17))	 
+							
 		
 class GUI:
 	def __init__(self):
@@ -619,20 +726,21 @@ class GUI:
 		
 		self.startSprites = StartSprites()
 		self.connectedSprites = ConnectedSprites()
-		self.optionSprites = OptionSprites()
+		self.helpSprites = HelpSprites()
 				
 		#atualizando as imagens
 		pygame.display.update()
 
 	def getAction(self, tela): #Gets if any key is pressed and what key
 			
-		clickedButton = ""
+		clickedButton = None 
+		flag = None
 		
 		for event in pygame.event.get():
 		
 			if event.type == pygame.QUIT:
-				clickedButton = 'quit'
-			
+				flag = 'quit'
+				
 			elif tela == "Start":
 				if event.type == pygame.MOUSEBUTTONDOWN:
 					pos = pygame.mouse.get_pos()
@@ -648,7 +756,7 @@ class GUI:
 						if self.connectedSprites.buttons[button].collidepoint(pos):
 							clickedButton = button							
 			
-			elif tela == "Options":
+			elif tela == "Help":
 				if event.type == pygame.MOUSEBUTTONDOWN:
 					pos = pygame.mouse.get_pos()
 					for button in self.connectedSprites.buttons:
@@ -657,7 +765,7 @@ class GUI:
 
 		keys = pygame.key.get_pressed()
 		
-		return (keys, clickedButton)								
+		return (keys, clickedButton, flag)								
 		
 	def update(self, tela, params={}):
 			
@@ -671,10 +779,9 @@ class GUI:
 			self.connectedSprites.update(params)
 			pygame.display.update()
 			
-		elif tela == "Options":
-		
+		elif tela == "Help":
 			self.screen.fill([220,220,220])
-			self.optionSprites.update(params)
+			self.helpSprites.update(params)
 			pygame.display.update()
 			pass
 
