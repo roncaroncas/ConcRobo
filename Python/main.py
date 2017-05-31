@@ -7,7 +7,6 @@ from database import DataBase
 from utils import *
 from config import *
 	
-
 class Client():
 	
 	def __init__(self):
@@ -98,8 +97,11 @@ class Client():
 				return
 				
 	def sendMsg(self):
-		self.conex.sendMsg(self.msg)
-
+		if not (self.conex.sendMsg(self.msg)):
+			self.tela = "Start"
+			self.st.state['message'] = "Perdeu conexao!"
+				
+	
 	def getResp(self):
 		#pega-se tem resp da conexao
 		success, resp = self.conex.getResp()
@@ -137,10 +139,10 @@ class Client():
 			
 			# Le o input do usu?rio (tambem considera uma possibilidade n?o haver nenhum)
 			self.getInput() # processa inputs
-			
-			
+					
+
 			if self.tela == "Connected":
-				
+
 				tic = time()
 			
 				#sendMsg (msg -> )
@@ -149,18 +151,13 @@ class Client():
 				#print(self.msg)
 
 				#getResp (server -> resp)
-				success = self.getResp()
-				
+				self.getResp()
 				toc = time()
 
 				ping = 1000*(toc-tic)
 				self.st.state['ping'] = ping
 				
-				#if self.resp:
-				#	print(self.resp)
-				
-				flag = False
-				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], flag)
+				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], self.st.state['flag'])
 					
 			if (self.tela == "Quit"):
 				self.conex.disconnect()

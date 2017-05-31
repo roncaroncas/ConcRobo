@@ -74,12 +74,19 @@ class Ethernet():
 			
 		
 	def disconnect(self):
-		print('Connection Closed!')
-		self.sock.close()
-		return True
-
+		try:
+			print('Connection Closed!')
+			self.sock.close()
+			return True
+		except:
+			return False
+			
 	def sendMsg(self,msg):
-		self.sock.sendall(msg.toProtocol())
+		try:
+			self.sock.sendall(msg.toProtocol())
+			return True
+		except:
+			return False
 		
 	def getResp(self):
 		try:

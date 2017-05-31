@@ -471,8 +471,8 @@ void updateRelay(int numRelay, boolean ligar){
 }
 
 void closeServer() {
-  if ((millis() - tLastConnect) > 5000){
-    Serial.println("Client Timeout!");
+  if ((millis() - tLastConnect) > 1000){
+    //Serial.println("Client Timeout!");
     client.stop();
   }
 }

@@ -1,5 +1,6 @@
 from math import sin, cos, pi
 from time import time
+from utils import *
 
 class State():
 	def __init__(self):
@@ -35,6 +36,8 @@ class State():
 				'ping':			0,
 				
 				'message':		"",
+				
+				'flag':			False
 				}	
 					
 		self.map = {
@@ -42,15 +45,15 @@ class State():
 				#TODO:
 				#MEDIR AS VELOCIDADES LINEARES E ANGULAS PARA CADA MOVIMENTO E ATUALIZAR TABELA
 				
-				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': 0.1005 , 'w': 0}, #vel em m/s, w em voltas/s (sentido anti-horario)
-				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': 0.1000 , 'w': -0.1}, #VALORES TESTES
-				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 'w': 0.25},	   #VALOTES TESTES
-				b'\x03': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SE'	,	'vel': 0 , 'w': 0},
-				b'\x04': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'S'		,	'vel': -0.1005 , 'w': 0},
-				b'\x05': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SO'	,	'vel': 0 , 'w': 0},
-				b'\x06': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'O'		,	'vel': 0 , 'w': 0},
-				b'\x07': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NO'	,	'vel': 0 , 'w': 0},
-				b'\x08': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'STOP'	,	'vel': 0 , 'w': 0},
+				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': +Krv , 	'w': 0}, #vel em m/s, w em voltas/s (sentido anti-horario)
+				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': +Kdv , 	'w': -Kdw}, #VALORES TESTES
+				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 		'w': -Klw},	   #VALOTES TESTES
+				b'\x03': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SE'	,	'vel': -Kdv , 	'w': +Kdw},
+				b'\x04': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'S'		,	'vel': -Krv , 	'w': 0},
+				b'\x05': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SO'	,	'vel': -Kdv , 	'w': -Kdw},
+				b'\x06': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'O'		,	'vel': 0 ,		'w': +Klw},
+				b'\x07': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NO'	,	'vel': +Kdv , 	'w': +Kdw},
+				b'\x08': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'STOP'	,	'vel': 0 , 		'w': 0},
 				
 				b'\x10': {'pointTo': 'accelX',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},			
 				b'\x11': {'pointTo': 'accelY',		'setter': 'accelABK',		'A': 1/1024., 	'B': -2., 	'K': .2},		
