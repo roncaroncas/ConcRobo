@@ -16,19 +16,23 @@ class StartSprites(pygame.sprite.Group):
 	def __init__(self):
 		pygame.sprite.Group.__init__(self)
 		
+		route = Route([150, 250])
 		connect = ConnectButton([150,400])
 		help = HelpButton([150,475])
 	
 		self.add(
 			Title([150,80]),
 			Message([150, 225]),
+			route,
 			connect,
 			help,
 		)
 		
 		self.buttons = {
 			'connect': connect.rect,
+			'routeSwitch' : route.rect,
 			'help': help.rect,
+			
 		}
 			
 class Title(pygame.sprite.Sprite):
@@ -84,7 +88,53 @@ class Message(pygame.sprite.Sprite):
 		label = font.render(arg, 1, (255,0,0))
 		SCREEN.blit(label, label.get_rect(center=[self.pos[0], self.pos[1]]))
 		
-		pass
+		
+class Route(pygame.sprite.Sprite):
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)
+		
+		#SETTING IMAGES
+		imgNames = [
+			'yes', 'no']
+
+		folderName = 'start'
+
+		self.imgs      = {
+				name: pygame.image.load("./img/"+folderName+"/{}.jpeg".format(name)).convert()
+				for name in imgNames
+				}			
+		
+		self.pos = pos
+		
+		#SET RECT TO USE AS BUTTON
+		img = self.imgs['no']
+		self.rect = img.get_rect(center=[self.pos[0], self.pos[1]+65])
+		
+	def update(self, params):
+	
+		arg = params['id']
+		arg2 = params['newRoute']
+
+		#GET AND BLIT TEXT
+		text = [
+			"Percurso Atual: " + str(arg+arg2),
+			'',
+			'Novo Percurso:',			
+			]
+		
+		font = pygame.font.SysFont("monospace", 16)
+		
+		for i in range(len(text)):
+			label = font.render(text[i], 1, (0,0,0))
+			SCREEN.blit(label, label.get_rect(center=[self.pos[0], self.pos[1] +i*17]))	 
+		
+		
+		#GET AND BLIT IMG
+		if arg2:
+			img = self.imgs['yes']
+		else:
+			img = self.imgs['no']
+		SCREEN.blit(img, self.rect)
 		
 class ConnectButton(pygame.sprite.Sprite):
 	def __init__(self, pos):
@@ -114,7 +164,7 @@ class ConnectButton(pygame.sprite.Sprite):
 		#GET AND BLIT IMG
 		img = self.imgs['Connect']
 		SCREEN.blit(img, img.get_rect(center=[self.pos[0], self.pos[1]]))
-		
+			
 class HelpButton(pygame.sprite.Sprite):
 	def __init__(self, pos):
 		pygame.sprite.Sprite.__init__(self)
@@ -151,7 +201,7 @@ class ConnectedSprites (pygame.sprite.Group):
 	def __init__(self):
 		pygame.sprite.Group.__init__(self)
 			
-		light = Light([5,275])
+		#light = Light([5,275])
 			
 		self.add(
 		Ping([0,0]),
@@ -159,7 +209,7 @@ class ConnectedSprites (pygame.sprite.Group):
 		XYZ([170,35]),
 		AngleA([15,115]),
 		AngleB([165,115]),
-		light,
+		#light,
 		Temperature([20,335]),
 		Pressure([250,400]),
 		Battery([250,450]),
@@ -168,8 +218,8 @@ class ConnectedSprites (pygame.sprite.Group):
 		)
 		
 		self.buttons = {
-			'lightMinus': light.rectMinus,
-			'lightPlus': light.rectPlus,
+		#	'lightMinus': light.rectMinus,
+		#	'lightPlus': light.rectPlus,
 		}
 			
 class Ping(pygame.sprite.Sprite):

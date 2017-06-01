@@ -1,7 +1,7 @@
 # CONFIGURACOES GERAIS
 PRINT = False
 
-CONEX = "ETHERNET" #MUST BE: OFFLINE, ETHERNET OR SERIAL
+CONEX = "OFFLINE" #MUST BE: OFFLINE, ETHERNET OR SERIAL
 DELAY = False
 
 ##KEYS
@@ -42,13 +42,13 @@ COM_PORT = "com3"
 
 #MOVEMENT CONSTANTS:
 ## Movimento Reto:
-Krv = 	0.1125 	#m/s
-Krw = 	0
+Krv = 	0.1125 			#m/s
+Krw = 	0				#voltas/s
 ## Movimento Diagonal 
-Kdv = 	0.06081 		# m
+Kdv = 	0.06081 		# m/s
 Kdw = 	0.03226 		# voltas/s
 ## Movimento Lado
-Klv = 	0 		# m
+Klv = 	0 				# m/s
 Klw = 	0.06427 		# voltas/s
 
 

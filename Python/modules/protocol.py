@@ -1,5 +1,5 @@
 #import constants in config
-from config import *
+from .config import *
 
 class Protocol:
 	

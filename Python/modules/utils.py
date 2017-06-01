@@ -1,5 +1,5 @@
 import math
-from config import *
+from .config import *
 
 def accelToAngle(x, y, z):
 	#CONVENCAO: A frente do carrinho aponta na mesma direção do eixo Y, a parte superior aponta para o eixo Z.
@@ -14,8 +14,8 @@ def accelToAngle(x, y, z):
 	#print('g:' + str(g))
 	
 	#Se g > 1.5 ou o carrinho ta caindo, ou deu um erro de medição, se ele tiver caindo, nao adianta medir.
-	#if g > 1.5:
-	#	return
+	if g > 1.2:
+		return (False, None)
 	
 	#em relacao ao g (sem sinal)
 	angleXG = - math.acos(x/g)*180/math.pi
@@ -29,7 +29,8 @@ def accelToAngle(x, y, z):
 	
 #	print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
 
-	return (-angleX, -angleY-90, angleZ)
+	
+	return (False, [-angleX, -angleY-90, angleZ])
 	
 def keysBool2key(keysBool):
 	keyVect = []

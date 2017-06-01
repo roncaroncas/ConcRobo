@@ -1,7 +1,7 @@
 import serial
 import socket
 
-from config import *
+from .config import *
 
 ######## PROTOCOLO DE COMUNICACAO ###########
 		
@@ -105,11 +105,8 @@ class Ethernet():
 				i = j
 		except:
 			return (False, False)
-		
-			
-			  
+				  
 #TODO: ATUALIZAR!
-
 class Serial():
 
 	def __init__(self):
@@ -128,6 +125,7 @@ class Serial():
 		print("Waiting for arduino response")
 		return ser.readline()
 
+		
 class FakeConnect():
 
 	def __init__(self):
@@ -142,7 +140,7 @@ class FakeConnect():
 	def sendMsg(self,msg):
 		#print("Sent fake msg")
 		print(msg)
-		pass	 
+		return True
 			 
 	def getResp(self):
 		#return b'\xfd\xfd\x15\xfc\xfc\xfe\xfe'

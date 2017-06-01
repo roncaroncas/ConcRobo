@@ -1,11 +1,12 @@
 from time import sleep, time
-from state import State
-from gui import GUI
-from network import Ethernet, Serial, FakeConnect
-from protocol import Message, Response
-from database import DataBase
-from utils import *
-from config import *
+import csv
+from modules.state import State
+from modules.gui import GUI
+from modules.network import Ethernet, Serial, FakeConnect
+from modules.protocol import Message, Response
+from modules.database import DataBase
+from modules.utils import *
+from modules.config import *
 	
 class Client():
 	
@@ -25,14 +26,29 @@ class Client():
 		self.resp = Response()
 		self.gui = GUI()
 		self.st = State()
-		self.db = DataBase()
+		
+		with open ('config/dbControl.csv', 'r') as dbControl:
+			dbConfig = {}
+			reader = csv.reader(dbControl, delimiter=';')
+			for row in reader:
+				if len(row) == 2:
+					dbConfig[row[0]] = row[1]
+			print(dbConfig)
+		
+		id = int(float(dbConfig['id']))
+		self.st.state['id'] = id
+		
+		#self.db = DataBase(new=True)
+		#p = self.db.params() #[x, y, z, alph, dist,id]
+		#self.st = State(p[0], p[1], p[2], p[3], p[4], p[5])
+		
 		
 		#VARIAVEL DE FLUXO: Alternar entre mandar write de client -> arduino e pedir read de client -> arduino
 		self.writeTurn = True #altera-se entre true e false para enviar informacoes de movimento ou para pedir informacoes analogicas
 		
 		self.tela = "Start"
-		
-		
+	
+	
 	def getInput(self):
 			
 		keysBool, clickedButton, flag = self.gui.getAction(self.tela)
@@ -52,6 +68,11 @@ class Client():
 				self.st.state['message'] = 'Connecting...'
 				self.gui.update(self.tela, self.st.state)
 				if self.conex.connect():
+					#Cria um novo db
+					self.db = DataBase(self.st.state['id']+self.st.state['newRoute'])
+					p = self.db.params() #[x, y, z, alph, dist, id]
+					self.st = State(p[0], p[1], p[2], p[3], p[4], p[5])
+		
 					self.tela = 'Connected'
 					self.st.state['message'] = ''
 					return
@@ -61,11 +82,20 @@ class Client():
 			elif clickedButton == 'help':
 				self.tela = 'Help'
 				return
+			elif clickedButton == 'routeSwitch':
+				self.st.state['newRoute'] = not(self.st.state['newRoute'])
+				return
 			#KEYBOARD:
 				#EMPTY
 			
 		#CONNECTED SCREEN
 		elif self.tela == "Connected":
+			
+			#priority actions
+			if key == 'ESCAPE':
+				self.conex.disconnect()
+				self.tela = 'Start'
+				return
 			
 			#WRITE TURN:
 			if (self.writeTurn):
@@ -73,13 +103,9 @@ class Client():
 				#MOUSE:
 					#EMPTY
 				#KEYBOARD:
-				if key == 'ESCAPE':
-					self.conex.disconnect()
-					self.tela = 'Start'
-					return
-				else:
-					self.msg.key2data(key)
-					return
+					#EMPTY
+				self.msg.key2data(key)
+				return
 			#READ TURN
 			else:
 				self.writeTurn = True
@@ -140,7 +166,6 @@ class Client():
 			# Le o input do usu?rio (tambem considera uma possibilidade n?o haver nenhum)
 			self.getInput() # processa inputs
 					
-
 			if self.tela == "Connected":
 
 				tic = time()
@@ -157,7 +182,7 @@ class Client():
 				ping = 1000*(toc-tic)
 				self.st.state['ping'] = ping
 				
-				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], self.st.state['flag'])
+				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], self.st.state['flag'], self.st.state['alpha'], self.st.state['distance'])
 					
 			if (self.tela == "Quit"):
 				self.conex.disconnect()

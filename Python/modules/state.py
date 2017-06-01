@@ -1,9 +1,9 @@
 from math import sin, cos, pi
 from time import time
-from utils import *
+from .utils import *
 
 class State():
-	def __init__(self):
+	def __init__(self, x0=0, y0=0, z0=0, alpha=90, dist=0, id=0):
 	
 		self.t = time()
 				
@@ -22,22 +22,27 @@ class State():
 				'pressure':		-1, 		# Pa
 				'battery': 		-1,			# %
 
-				'distance':		0,			# TODO
+				'distance':		dist,			# TODO
 				'velocity': 	0,			# TODO
 				
 				
-				'alpha':		90,			# ?
+				'alpha':		alpha,			# ?
 				'wVelocity':	0,
 				
-				'x0':    0,
-				'y0':	0,
-				'z0': 	0,
+				'x0':   x0,
+				'y0':	y0,
+				'z0': 	z0,
 				
 				'ping':			0,
 				
 				'message':		"",
 				
+				'id':			id,
+				'newRoute':		False,
+				
 				'flag':			False
+				
+				
 				}	
 					
 		self.map = {
@@ -45,9 +50,9 @@ class State():
 				#TODO:
 				#MEDIR AS VELOCIDADES LINEARES E ANGULAS PARA CADA MOVIMENTO E ATUALIZAR TABELA
 				
-				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': +Krv , 	'w': 0}, #vel em m/s, w em voltas/s (sentido anti-horario)
-				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': +Kdv , 	'w': -Kdw}, #VALORES TESTES
-				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 		'w': -Klw},	   #VALOTES TESTES
+				b'\x00': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'N'		,	'vel': +Krv , 	'w': 0}, 	#vel em m/s, w em voltas/s (sentido anti-horario)
+				b'\x01': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'NE'	,	'vel': +Kdv , 	'w': -Kdw}, #variaveis guardadas no config
+				b'\x02': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'E'		,	'vel': 0 , 		'w': -Klw},
 				b'\x03': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SE'	,	'vel': -Kdv , 	'w': +Kdw},
 				b'\x04': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'S'		,	'vel': -Krv , 	'w': 0},
 				b'\x05': {'pointTo': 'lastMove',	'setter': 'setMoveValue',		'value':'SO'	,	'vel': -Kdv , 	'w': -Kdw},
@@ -99,16 +104,16 @@ class State():
 			deltaT = now - self.t
 			self.t = now
 
-			self.state['distance'] += deltaT*self.state['velocity']
-			self.state['x0'] += deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*cos(pi/180*self.state['alpha'])
-			self.state['y0'] += deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*sin(pi/180*self.state['alpha'])
-			self.state['z0'] += deltaT*self.state['velocity']*sin(pi/180*self.state['angleB'])
+			self.state['distance'] 	+= deltaT*self.state['velocity']
+			self.state['x0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*cos(pi/180*self.state['alpha'])
+			self.state['y0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*sin(pi/180*self.state['alpha'])
+			self.state['z0'] 		+= deltaT*self.state['velocity']*sin(pi/180*self.state['angleB'])
 			
-			self.state['alpha']    = (self.state['alpha']+(360*deltaT*self.state['wVelocity']))%360
-			self.state['velocity'] = self.map[indice]['vel']
+			self.state['alpha']    	= (self.state['alpha']+(360*deltaT*self.state['wVelocity']))%360
+			self.state['velocity'] 	= self.map[indice]['vel']
 			self.state['wVelocity'] = self.map[indice]['w']
 			
-			self.state['lastMove'] = self.map[indice]['value']
+			self.state['lastMove'] 	= self.map[indice]['value']
 			
 			
 		elif setter == 'ABK':
@@ -145,5 +150,7 @@ class State():
 			self.state[stateToChange] = newValue
 			
 			accelX, accelY, accelZ = self.state['accelX'], self.state['accelY'], self.state['accelZ']
-			angleA, angleB, _ = accelToAngle(accelX, accelY, accelZ)
-			self.state['angleA'], self.state['angleB'] = angleA, angleB
+			success, angles =  accelToAngle(accelX, accelY, accelZ)
+			if success:
+				angleA, angleB 		= angles[0], angle[1]
+				self.state['angleA'], self.state['angleB'] = angleA, angleB
