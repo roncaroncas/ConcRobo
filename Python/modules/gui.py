@@ -1,11 +1,18 @@
 import pygame
+#from .plotter import Plotter
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.backends.backend_agg as agg
+import pylab
+
+#plotter = Plotter()
 
 pygame.init()
 
 pygame.display.set_caption('Zinho')
 
 #Initialize Surface
-SCREEN = pygame.display.set_mode((300,600))
+SCREEN = pygame.display.set_mode((300,680))
 
 # Initialize font
 FONT = pygame.font.SysFont("monospace", 15)
@@ -87,7 +94,6 @@ class Message(pygame.sprite.Sprite):
 		font = pygame.font.SysFont("monospace", 16)
 		label = font.render(arg, 1, (255,0,0))
 		SCREEN.blit(label, label.get_rect(center=[self.pos[0], self.pos[1]]))
-		
 		
 class Route(pygame.sprite.Sprite):
 	def __init__(self, pos):
@@ -210,11 +216,12 @@ class ConnectedSprites (pygame.sprite.Group):
 		AngleA([15,115]),
 		AngleB([165,115]),
 		#light,
-		Temperature([20,335]),
-		Pressure([250,400]),
-		Battery([250,450]),
-		Distance([250,500]),
-		Velocity([250,550]),
+		Temperature([20,270]),
+		Pressure([250,325]),
+		Battery([250,365]),
+		Distance([250,405]),
+		Velocity([250,445]),
+		Plot([10,460])
 		)
 		
 		self.buttons = {
@@ -656,6 +663,67 @@ class Velocity(pygame.sprite.Sprite):
 		label = FONT.render('Velocidade:  {:4.1f} m/s'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))				
 
+class Plot(pygame.sprite.Sprite):
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)	
+	
+		#SET POSITION
+		self.pos = pos
+		
+		self.surface = None
+		
+		self.lastX = 0
+		self.lastY = 0
+		
+	def getSurface(self, arg1, arg2):
+		
+		fig = pylab.figure(figsize=[2.8, 2], # Inches
+						   dpi=100,        	   # 100 dots per inch, so the resulting buffer is 400x400 pixels
+						   )
+		ax = fig.gca()
+		
+		print("AAAAAAAAAAAAAAAAAARG1", arg1, "ARG2", arg2)
+		lim = max([max(arg1),max(arg2)])*1.1
+		
+		ax.axis([-lim*2.8/2, lim*2.8/2, -lim, lim])
+		ax.plot(arg1,arg2)
+		
+
+		canvas = agg.FigureCanvasAgg(fig)
+		canvas.draw()
+		renderer = canvas.get_renderer()
+		raw_data = renderer.tostring_rgb()
+
+		size = canvas.get_width_height()
+
+		#Create pygame surface from string
+		surf = pygame.image.fromstring(raw_data, size, "RGB")
+		
+		pylab.close(fig)
+		
+		#SET TRANSPARENCY TO IMAGES
+		surf.set_colorkey((255,255,255))
+	
+		self.surface = surf
+		
+	
+	def update(self, params):
+		arg1 = params['listX']
+		arg2 = params['listY']
+		
+		lastX = arg1[-1]
+		lastY = arg2[-1]
+		
+		if lastX == lastY == 0:
+			return
+		
+		if not(lastX == self.lastX and lastY == self.lastY):
+			self.lastX = lastX
+			self.lastY = lastY
+			
+			surface = self.getSurface(arg1,arg2)
+	
+		SCREEN.blit(self.surface, self.pos)
 #######################
 	
 class HelpSprites(pygame.sprite.Group):
@@ -819,6 +887,8 @@ class GUI:
 		
 	def update(self, tela, params={}):
 			
+		#print(params)
+		
 		if tela == "Start":
 			self.screen.fill([220,220,220])
 			self.startSprites.update(params)

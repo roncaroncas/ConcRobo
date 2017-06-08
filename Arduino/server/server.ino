@@ -9,7 +9,7 @@
 // Network
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 byte ip[] = {192, 168, 0, 120};
-byte gateway[] = { 192, 168, 0 , 1};
+byte gateway[] = { 192, 168, 0, 140};
 byte subnet[] = { 255, 255, 255, 0 };
 
 EthernetServer server(23);  // create a server at port 23

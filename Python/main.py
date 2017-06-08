@@ -33,7 +33,7 @@ class Client():
 			for row in reader:
 				if len(row) == 2:
 					dbConfig[row[0]] = row[1]
-			print(dbConfig)
+			#print(dbConfig)
 		
 		id = int(float(dbConfig['id']))
 		self.st.state['id'] = id
@@ -70,8 +70,9 @@ class Client():
 				if self.conex.connect():
 					#Cria um novo db
 					self.db = DataBase(self.st.state['id']+self.st.state['newRoute'])
-					p = self.db.params() #[x, y, z, alph, dist, id]
-					self.st = State(p[0], p[1], p[2], p[3], p[4], p[5])
+					p = self.db.params() #[x, y, z, alph, dist, id, listX, listY]
+					print("PPPPPPPPPPPPPPPPPP", p)
+					self.st = State(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
 		
 					self.tela = 'Connected'
 					self.st.state['message'] = ''
@@ -158,7 +159,7 @@ class Client():
 		while (self.tela != "Quit"):
 		
 			sleep(.10)
-			print(self.st)
+			#print(self.st)
 
 			#Atualiza os gráficos
 			self.gui.update(self.tela, self.st.state)
@@ -182,7 +183,11 @@ class Client():
 				ping = 1000*(toc-tic)
 				self.st.state['ping'] = ping
 				
-				self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], self.st.state['flag'], self.st.state['alpha'], self.st.state['distance'])
+				saved = self.db.save(toc,self.st.state['x0'], self.st.state['y0'], self.st.state['z0'], self.st.state['flag'], self.st.state['alpha'], self.st.state['distance'])
+					
+				if not (saved is None):
+					self.st.state['listX'].append(saved[0])
+					self.st.state['listY'].append(saved[1])
 					
 			if (self.tela == "Quit"):
 				self.conex.disconnect()

@@ -3,7 +3,7 @@ from time import time
 from .utils import *
 
 class State():
-	def __init__(self, x0=0, y0=0, z0=0, alpha=90, dist=0, id=0):
+	def __init__(self, x0=0, y0=0, z0=0, alpha=90, dist=0, id=0, listX=[0], listY=[0]):
 	
 		self.t = time()
 				
@@ -32,6 +32,9 @@ class State():
 				'x0':   x0,
 				'y0':	y0,
 				'z0': 	z0,
+				
+				'listX':	listX,
+				'listY':	listY,
 				
 				'ping':			0,
 				
@@ -108,6 +111,9 @@ class State():
 			self.state['x0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*cos(pi/180*self.state['alpha'])
 			self.state['y0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*sin(pi/180*self.state['alpha'])
 			self.state['z0'] 		+= deltaT*self.state['velocity']*sin(pi/180*self.state['angleB'])
+			
+			#self.state['listX'].append(self.state['x0'])
+			#self.state['listY'].append(self.state['y0'])
 			
 			self.state['alpha']    	= (self.state['alpha']+(360*deltaT*self.state['wVelocity']))%360
 			self.state['velocity'] 	= self.map[indice]['vel']

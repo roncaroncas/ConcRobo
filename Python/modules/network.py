@@ -139,7 +139,7 @@ class FakeConnect():
 
 	def sendMsg(self,msg):
 		#print("Sent fake msg")
-		print(msg)
+		#print(msg)
 		return True
 			 
 	def getResp(self):

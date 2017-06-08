@@ -30,7 +30,7 @@ def accelToAngle(x, y, z):
 #	print("{:3.1f} {:3.1f} {:3.1f} {:3.1f}".format(x, y, z, g))
 
 	
-	return (False, [-angleX, -angleY-90, angleZ])
+	return (True, [-angleX, -angleY-90, angleZ])
 	
 def keysBool2key(keysBool):
 	keyVect = []

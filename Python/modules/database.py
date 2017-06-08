@@ -1,7 +1,7 @@
 import csv
-from time import time
 import shutil
 import os.path
+from .plotter import Plotter
 
 class DataBase:
 	def __init__(self, id, new=True):
@@ -34,6 +34,8 @@ class DataBase:
 			self.alpha = float(dbConfig['alpha'])
 			
 			self.dist = float(dbConfig['dist'])
+			
+			#self.plot = Plotter()
 
 			
 		#SE O ID NAO EXISTE
@@ -64,12 +66,33 @@ class DataBase:
 			writer.writerow([	'dist',		str(self.dist)  ])	
 		
 	def params(self):
-		return (self.x, self.y, self.z, self.alpha, self.dist, self.id)
+		
+		listX = []
+		listY = []
+		with open (self.fileName, 'r') as hist:
+				reader = csv.reader(hist, delimiter=';')
+				
+				for row in reader:
+					try:
+						listX.append(float(row[1]))
+						listY.append(float(row[2]))
+					except:
+						pass
+				listX = listX[1:]
+				listY = listY[1:]
+				
+				if not(listX):
+					listX = [0]
+				if not(listY):
+					listY = [0]
+				
+		
+		return (self.x, self.y, self.z, self.alpha, self.dist, self.id, listX, listY)
 	
 	def save (self,t,x,y,z,flag, alpha, dist):
 		if (((self.x-x)**2 + (self.y-y)**2 + (self.z-z)**2 > self.deltaR**2) or flag == True):
 			
-			print('Saving: ',t,' ', x,' ',y,' ',z,' ', flag)
+			#print('Saving: ',t,' ', x,' ',y,' ',z,' ', flag)
 			self.writer.writerow(localize_floats([t,x,y,z,flag]))
 			
 			#print('Extras: alph: ',alpha,' dist: ',dist)
@@ -92,7 +115,12 @@ class DataBase:
 				writer.writerow([	'y',		str(self.y)  	])
 				writer.writerow([	'z',		str(self.z)  	])
 				writer.writerow([	'alpha',	str(self.alpha) ])
-				writer.writerow([	'dist',		str(self.dist)  ])		
+				writer.writerow([	'dist',		str(self.dist)  ])
+				
+			return (self.x, self.y)
+			
+		return None
+			
 	
 	
 	def backup(self):
