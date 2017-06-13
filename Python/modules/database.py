@@ -1,7 +1,7 @@
 import csv
 import shutil
 import os.path
-from .plotter import Plotter
+#from .plotter import Plotter
 
 class DataBase:
 	def __init__(self, id, new=True):
@@ -74,8 +74,10 @@ class DataBase:
 				
 				for row in reader:
 					try:
-						listX.append(float(row[1]))
-						listY.append(float(row[2]))
+						#print("TRYYYYING")
+						print("FLLLLLLLAOAROARO: ", (row[1]))
+						listX.append(float(row[1].replace(',', '.')))
+						listY.append(float(row[2].replace(',', '.')))
 					except:
 						pass
 				listX = listX[1:]
@@ -93,7 +95,7 @@ class DataBase:
 		if (((self.x-x)**2 + (self.y-y)**2 + (self.z-z)**2 > self.deltaR**2) or flag == True):
 			
 			#print('Saving: ',t,' ', x,' ',y,' ',z,' ', flag)
-			self.writer.writerow(localize_floats([t,x,y,z,flag]))
+			self.writer.writerow(replaceDot2Comma([t,x,y,z,flag]))
 			
 			#print('Extras: alph: ',alpha,' dist: ',dist)
 			
@@ -136,8 +138,9 @@ class DataBase:
 
 		
 #Convete "." para "," nos floats para que o excel consiga plotar os gráficos 
-def localize_floats(row):
+def replaceDot2Comma(row):
 		return [
         str(el).replace('.', ',') if isinstance(el, float) else el 
         for el in row
 		]
+		

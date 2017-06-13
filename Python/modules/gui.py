@@ -639,7 +639,7 @@ class Distance(pygame.sprite.Sprite):
 		arg = params['distance']
 	
 		#GET AND BLIT TEXT
-		label = FONT.render('Distância:   {:4.1f} m'.format(arg), 1, (0,0,0))
+		label = FONT.render('Distância:   {:5.3f} m'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 		
 class Velocity(pygame.sprite.Sprite):
@@ -660,7 +660,7 @@ class Velocity(pygame.sprite.Sprite):
 		arg = params['velocity']
 	
 		#GET AND BLIT TEXT
-		label = FONT.render('Velocidade:  {:4.1f} m/s'.format(arg), 1, (0,0,0))
+		label = FONT.render('Velocidade:  {:5.3f} m/s'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))				
 
 class Plot(pygame.sprite.Sprite):
@@ -672,9 +672,8 @@ class Plot(pygame.sprite.Sprite):
 		
 		self.surface = None
 		
-		self.lastX = 0
-		self.lastY = 0
-		
+		self.first = True
+				
 	def getSurface(self, arg1, arg2):
 		
 		fig = pylab.figure(figsize=[2.8, 2], # Inches
@@ -682,8 +681,11 @@ class Plot(pygame.sprite.Sprite):
 						   )
 		ax = fig.gca()
 		
-		print("AAAAAAAAAAAAAAAAAARG1", arg1, "ARG2", arg2)
-		lim = max([max(arg1),max(arg2)])*1.1
+		#print("AAAAAAAAAAAAAAAAAARG1", arg1, "ARG2", arg2)
+		limSup = max([max(arg1),max(arg2)])
+		limInf = min([min(arg1),min(arg2)])
+		
+		lim = max([limSup, -limInf])*1.1
 		
 		ax.axis([-lim*2.8/2, lim*2.8/2, -lim, lim])
 		ax.plot(arg1,arg2)
@@ -704,26 +706,36 @@ class Plot(pygame.sprite.Sprite):
 		#SET TRANSPARENCY TO IMAGES
 		surf.set_colorkey((255,255,255))
 	
-		self.surface = surf
+		return surf
 		
 	
 	def update(self, params):
+	
 		arg1 = params['listX']
 		arg2 = params['listY']
+		
+		if self.first:
+			self.first = False
+			self.lastX = arg1[-1]
+			self.lastY = arg2[-1]
+			self.surface = self.getSurface(arg1,arg2)
 		
 		lastX = arg1[-1]
 		lastY = arg2[-1]
 		
-		if lastX == lastY == 0:
-			return
+		print('LASTXY:                  ', lastX, lastY)
 		
 		if not(lastX == self.lastX and lastY == self.lastY):
 			self.lastX = lastX
 			self.lastY = lastY
 			
-			surface = self.getSurface(arg1,arg2)
+			self.surface = self.getSurface(arg1,arg2)
 	
 		SCREEN.blit(self.surface, self.pos)
+		
+		self.lastX = lastX
+		self.lastY = lastY
+		
 #######################
 	
 class HelpSprites(pygame.sprite.Group):

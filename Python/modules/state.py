@@ -107,15 +107,45 @@ class State():
 			deltaT = now - self.t
 			self.t = now
 
-			self.state['distance'] 	+= deltaT*self.state['velocity']
-			self.state['x0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*cos(pi/180*self.state['alpha'])
-			self.state['y0'] 		+= deltaT*self.state['velocity']*cos(pi/180*self.state['angleB'])*sin(pi/180*self.state['alpha'])
-			self.state['z0'] 		+= deltaT*self.state['velocity']*sin(pi/180*self.state['angleB'])
+			vel = self.state['velocity']
+			w = self.state['wVelocity']
 			
-			#self.state['listX'].append(self.state['x0'])
-			#self.state['listY'].append(self.state['y0'])
+			vx0 = vel*cos(pi/180*self.state['alpha'])*cos(pi/180*self.state['angleB'])
+			vy0 = vel*sin(pi/180*self.state['alpha'])*cos(pi/180*self.state['angleB'])
+			vz0 = vel*sin(pi/180*self.state['angleB'])
 			
-			self.state['alpha']    	= (self.state['alpha']+(360*deltaT*self.state['wVelocity']))%360
+			self.state['distance'] 	+= deltaT*vel
+			self.state['z0'] 		+= deltaT*vz0
+			
+			
+			#if False:
+			if w != 0:
+				r = vel/w /(2*pi)
+				alp = self.state['alpha']*pi/180	#em radianos
+				alpNovo = deltaT*w*2*pi+alp			#em radianos
+				
+				x0 = self.state['x0']
+				y0 = self.state['y0']
+				
+				xc = x0 + r/vel * -vy0
+				yc = y0 + r/vel * vx0
+				
+				vx1 = vel*cos(alpNovo)*cos(pi/180*self.state['angleB'])
+				vy1 = vel*sin(alpNovo)*cos(pi/180*self.state['angleB'])
+				
+				x1 = xc - r/vel * -vy1
+				y1 = yc - r/vel * vx1
+				
+				self.state['x0'] 		= x1
+				self.state['y0'] 		= y1
+			
+			else:
+			
+				self.state['x0'] 		+= deltaT*vx0
+				self.state['y0'] 		+= deltaT*vy0
+			
+			
+			self.state['alpha']    	= (self.state['alpha']+(360*deltaT*self.state['wVelocity']))%360d	#em graus
 			self.state['velocity'] 	= self.map[indice]['vel']
 			self.state['wVelocity'] = self.map[indice]['w']
 			
