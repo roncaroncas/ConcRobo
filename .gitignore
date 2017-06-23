@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# tmp
+Python/percursos/*.csv
+Zinho
+Python/template/*
