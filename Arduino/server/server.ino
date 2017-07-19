@@ -8,11 +8,12 @@
 
 // Network
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-byte ip[] = {192, 168, 0, 120};
-byte gateway[] = { 192, 168, 0, 140};
-byte subnet[] = { 255, 255, 255, 0 };
+byte ip[] = {192, 168, 0, 125};
+byte DNS[] = {192, 168, 0, 1};
+byte gateway[] = {192, 168, 0, 1};
+byte subnet[] = {255, 255, 255, 0 };
 
-EthernetServer server(23);  // create a server at port 23
+EthernetServer server(30);  // create a server at port 23
 EthernetClient client;
 
 //Accelerometer
@@ -62,11 +63,15 @@ void setup() {
 
 
   // Inicializando serial
+  delay(1000); //espera 0,2 segundos para estabilizar conexao
+
   Serial.begin(9600); // Debugging
   Serial.println("Init...");
 
   // Inicializando internet
-  Ethernet.begin(mac, ip, gateway, subnet); // initialize Ethernet device
+  //Ethernet.begin(mac, ip, gateway, subnet); // initialize Ethernet device
+  Ethernet.begin(mac, ip, DNS, gateway, subnet); // initialize Ethernet device
+  //Ethernet.begin(mac, ip);
   server.begin();           // start to listen for clients
   Serial.println("Server ready");
 
@@ -89,8 +94,6 @@ void setup() {
   //pinMode(pinRelC, OUTPUT);
   //pinMode(pinRelD, OUTPUT);
   Serial.println("Relays ready");
-
-  delay(1000); //espera 0,2 segundos para estabilizar conexao
 
   Serial.println("Setup Ready");
   Serial.print("IP: ");
@@ -382,26 +385,26 @@ void setReles() {
 
     //UP_RIGHT
     case 0x01 :
-      updateRelay(1,false);
+      updateRelay(1,true);
       updateRelay(2,false);
-      updateRelay(3,true);
+      updateRelay(3,false);
       updateRelay(4,false);
       break;
 
     //RIGHT
     case 0x02 :    
-      updateRelay(1,false);
-      updateRelay(2,true);
-      updateRelay(3,true);
-      updateRelay(4,false);
+      updateRelay(1, true);
+      updateRelay(2,false);
+      updateRelay(3,false);
+      updateRelay(4,true);
       break;
 
     //DOWN_RIGHT
     case 0x03 :
       updateRelay(1,false);
-      updateRelay(2,false);
+      updateRelay(2,true);
       updateRelay(3,false);
-      updateRelay(4,true);
+      updateRelay(4,false);
       break;
 
     //DOWN
@@ -416,24 +419,24 @@ void setReles() {
     //DOWN_LEFT
     case 0x05 :
       updateRelay(1,false);
-      updateRelay(2,true);
-      updateRelay(3,false);
-      updateRelay(4,false);
-      break;
-
-    //LEFT
-    case 0x06 :
-      updateRelay(1,true);
       updateRelay(2,false);
       updateRelay(3,false);
       updateRelay(4,true);
       break;
 
+    //LEFT
+    case 0x06 :
+      updateRelay(1,false);
+      updateRelay(2,true);
+      updateRelay(3,true);
+      updateRelay(4,false);
+      break;
+
     //UP_LEFT
     case 0x07 :
-      updateRelay(1,true);
+      updateRelay(1,false);
       updateRelay(2,false);
-      updateRelay(3,false);
+      updateRelay(3,true);
       updateRelay(4,false);
       break;
 

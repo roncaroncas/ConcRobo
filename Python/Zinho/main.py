@@ -9,7 +9,8 @@ from mods.config import *
 from mods.gui import GUI
 
 #pyinstaller main.py -F -w
-	
+
+
 class Client():
 	
 	def __init__(self):
