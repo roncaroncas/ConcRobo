@@ -250,9 +250,10 @@ class ConnectedSprites (pygame.sprite.Group):
 		XYZ([170,35]),
 		AngleA([15,115]),
 		AngleB([165,115]),
-		Temperature([20,270]),
-		Pressure([250,325]),
-		Battery([250,365]),
+		Temperature([20,260]),
+		Pressure([250,305]),
+		BatteryV([250,340]),
+		BatteryA([250,375]),
 		Distance([250,405]),
 		Velocity([250,445]),
 		flag,
@@ -621,7 +622,7 @@ class Pressure(pygame.sprite.Sprite):
 			label = FONT.render('Pressão:  {:5.1f} Pa'.format(arg), 1, (0,0,0))
 		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
 		
-class Battery(pygame.sprite.Sprite):
+class BatteryV(pygame.sprite.Sprite):
 	def __init__(self, pos):
 		pygame.sprite.Sprite.__init__(self)	
 		
@@ -650,7 +651,63 @@ class Battery(pygame.sprite.Sprite):
 		
 	def update(self, params):
 	
-		arg = params['battery']
+		arg = params['batteryV']
+	
+		#CHOOSING IMAGE:
+		Bmin = 0
+		Bmax = 100
+		numImgs = len(self.imgs)-1
+		
+		if arg == -1:
+			img = self.imgs['bat-1']
+		elif arg <= Bmin:
+			img = self.imgs['bat00']
+		elif arg < Bmax:
+			img = self.imgs['bat{:02}'.format(int((arg-Bmin)*numImgs/(Bmax-Bmin)))]
+		else:
+			img = self.imgs['bat{:02}'.format(numImgs-1)]
+		
+		SCREEN.blit(img, img.get_rect(center=self.pos))
+		
+		#GET AND BLIT TEXT
+		if arg == -1:
+			label = FONT.render('Bateria:     ??.? %', 1, (0,0,0))
+		else:
+			#label = FONT.render('Bateria: {:3.0f}%'.format(arg), 1, (0,0,0))
+			label = FONT.render('Bateria:   {:5.3f} V'.format(arg), 1, (0,0,0))
+		
+		SCREEN.blit(label, (self.pos[0]-230, self.pos[1]-15))
+
+class BatteryA(pygame.sprite.Sprite):
+	def __init__(self, pos):
+		pygame.sprite.Sprite.__init__(self)	
+		
+		#SET IMAGES
+		
+		imgNames = ['bat-1', 'bat00', 'bat01', 'bat02', 'bat03', 'bat04', 'bat05', 'bat06',
+		]
+
+		folderName = 'battery'
+
+		self.imgs      = {
+				name: pygame.image.load("./img/"+folderName+"/{}.jpeg".format(name)).convert()
+				for name in imgNames
+				}
+								
+		#SET TRANSPARENCY TO IMAGES
+		for name in self.imgs:
+			self.imgs[name].set_colorkey((255,0,255))
+
+		#SET POSITION
+		self.pos = pos
+		
+		#SET AND BLIT DEFAULT IMAGE
+		img = self.imgs['bat-1']		
+		#SCREEN.blit(img, img.get_rect(center=self.pos))
+		
+	def update(self, params):
+	
+		arg = params['batteryA']
 	
 		#CHOOSING IMAGE:
 		Bmin = 0

@@ -60,15 +60,12 @@ void setup()
   //     ODR_6, or ODR_1. 
   //     Sets to 800, 400, 200, 100, 50, 12.5, 6.25, or 1.56 Hz.
   //accel.init(SCALE_8G, ODR_6);
-  Serial.println("Starting!");
-  
 }
 
 // The loop function will simply check for new data from the
 //  accelerometer and print it out if it's available.
 void loop()
 {
-  delay(10);
   // Use the accel.available() function to wait for new data
   //  from the accelerometer.
   if (accel.available())
@@ -77,11 +74,9 @@ void loop()
     accel.read();
     
     // accel.read() will update two sets of variables. 
-    
     // * int's x, y, and z will store the signed 12-bit values 
     //   read out of the accelerometer.
     // * floats cx, cy, and cz will store the calculated 
-    
     //   acceleration from those 12-bit values. These variables 
     //   are in units of g's.
     // Check the two function declarations below for an example
@@ -92,12 +87,26 @@ void loop()
     // The library also supports the portrait/landscape detection
     //  of the MMA8452Q. Check out this function declaration for
     //  an example of how to use that.
-    //printOrientation();
+    printOrientation();
     
     Serial.println(); // Print new line every time.
   } else {
-    Serial.println("Fail!");
+    Serial.println("Fail");
   }
+}
+
+// The function demonstrates how to use the accel.x, accel.y and
+//  accel.z variables.
+// Before using these variables you must call the accel.read()
+//  function!
+void printAccels()
+{
+  Serial.print(accel.x, 3);
+  Serial.print("\t");
+  Serial.print(accel.y, 3);
+  Serial.print("\t");
+  Serial.print(accel.z, 3);
+  Serial.print("\t");
 }
 
 // This function demonstrates how to use the accel.cx, accel.cy,
@@ -106,20 +115,12 @@ void loop()
 //  function!
 void printCalculatedAccels()
 { 
-  int x;
-  int y;
-  int z;
-
-  x = int(1024*accel.cx+2048);
-  y = int(1000*accel.cy+2048);
-  z = int(1000*accel.cz+2048);
-  
-  Serial.print(x);
-  Serial.print("\t\t");
-  Serial.print(y);
-  Serial.print("\t\t");
-  Serial.print(z);
-  Serial.print("\t\t");
+  Serial.print(accel.cx, 3);
+  Serial.print("\t");
+  Serial.print(accel.cy, 3);
+  Serial.print("\t");
+  Serial.print(accel.cz, 3);
+  Serial.print("\t");
 }
 
 // This function demonstrates how to use the accel.readPL()

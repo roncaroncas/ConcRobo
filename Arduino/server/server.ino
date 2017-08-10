@@ -1,3 +1,91 @@
+/*
+  Zinho Server
+
+  Esse programa define o arduino como um servidor que receberá comandos via ethernet
+  Tais comandos devem alterar configurações do Robo como direção.
+  Ou também podem pedir informação ao arduino
+  Ele também é capaz de enviar medições via ethernet
+
+  
+  Serão necessários os seguintes componentes para esse projeto:
+  -Arduino
+  -Sheild Ethernet
+  -Shield Multirelés
+  -Sensores:
+  -- Pressão e Temperatura (BMP 280)
+  -- Accelerometro (MMA845X)
+  -- Tensão (para as baterias)
+  -- Corrente
+  
+  O circuito é feito da seguinte maneira:
+    
+    
+    POTENCIA:
+
+    Bateria 12V ----CHAVE ON/OFF --------SENSOR CORRENTE ------- DERIVACAO
+        12V ------------ A
+                         B ------------------- A
+                                               B --------------- DERIVACAO(+)
+        GND ------------ C
+                         D ------------------------------------- DERIVACAO(-)                                       
+                                               
+   
+                  DERIVACAO(+)      SENSOR TENSAO    ARDUINO    CAM1     CAM2
+    DERIVACAO (+) -----|------------------ A
+                       |----------------------------- PWR (+)
+                       |--------------------------------------- PWR(+)
+                       |------------------------------------------------ PWR(+)
+
+                  DERIVACAO(-)      SENSOR TENSAO    ARDUINO    CAM1     CAM2
+    DERIVACAO (-) -----|------------------ A
+                       |----------------------------- PWR (-)
+                       |--------------------------------------- PWR(-)
+                       |------------------------------------------------ PWR(-)
+
+    SINAIS:
+
+    ARDUINO -------------- SENSOR CORRENTE
+      5V    ---------------     VCC
+ analogPin 1---------------     OUT                 *Alterar o analogPin na próxima seção desse programa caso necessário
+      GND   ---------------     GND
+
+   ARDUINO --------------- SENSOR TENSAO
+      12V   ---------------     12V
+      GND   ---------------     GND
+ analogPin 2---------------     DATA                *Alterar o analogPin na próxima seção desse programa caso necessário
+      
+    ARDUINO ---------------   MMA8452Q (Acelerometro)
+      3.3V  ---------------     VCC
+      GND   ---------------     GND
+      SDA   ---------------     SDA
+      SCL   ---------------     SCL
+
+    ARDUINO ---------------    BMP280 (Temp. e Pres.)
+      3.3V  ---------------     VCC
+      GND   ---------------     GND
+      SDA   ---------------     SDA
+      SCL   ---------------     SCL
+      SA0   ---------------     +5V
+
+    ARDUINO ---------------    Multi-Relés
+      12V   ---------------     12V
+      GND   ---------------     GND
+  digPin 4  ---------------     DATA                *Alterar o digPin na próxima seção desse programa caso necessário
+  digPin 5  ---------------     CLK                 *Alterar o digPin na próxima seção desse programa caso necessário
+
+    ARDUINO ---------------  ETHERNET SHIELD
+  digPin 10  ---------------     digPin10           *Esses pinos não podem ser alterados devido ao próprio encaixe do shield
+  digPin 11  ---------------     digPin11           *Esses pinos não podem ser alterados devido ao próprio encaixe do shield
+  digPin 12  ---------------     digPin12           *Esses pinos não podem ser alterados devido ao próprio encaixe do shield
+  digPin 13  ---------------     digPin13           *Esses pinos não podem ser alterados devido ao próprio encaixe do shield
+
+  Criado 08/08/2017
+  Por Victor Roncalli e Fabio Subtil - Concremat
+  victor.roncalli.souza@gmail.com
+*/
+
+//-------------------------------BIBLIOTECAS-----------------------------------//
+
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Wire.h> // Must include Wire library for I2C
@@ -6,98 +94,85 @@
 #include <Adafruit_BMP280.h>
 #include <SerialRelay.h> // Include Serial Relay
 
-// Network
+//------------------------CONFIGURAÇÕES PARA ALTERAR---------------------------//
+
+///////////////////// Network ////////////////////
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 byte ip[] = {192, 168, 0, 125};
 byte DNS[] = {192, 168, 0, 1};
 byte gateway[] = {192, 168, 0, 1};
 byte subnet[] = {255, 255, 255, 0 };
 
-EthernetServer server(30);  // create a server at port 23
+////////////////// Pinos Digitais ////////////////
+int relayDataPin = 4;
+int relayClockPin = 5;
+
+///////////////// Pinos Analogicos ///////////////
+int analogBatAPin = 1;   //Amostragem de corrente
+int analogBatVPin = 2;   //Amostragem de tensão
+
+
+//------------------------DECLARAÇÃO DE VARIÁVEIS -----------------------------//
+
+
+///////////////////// Network ////////////////////
+EthernetServer server(23);  // create a server at port 23
 EthernetClient client;
 
-//Accelerometer
+//////////////////// Acelerometro ////////////////
 MMA8452Q accel;
 
-//Pressao e Temperatura
-Adafruit_BMP280 bmp; // I2C
+//////////////// Pressao e Temperatura ///////////
+Adafruit_BMP280 bmp;
 
-// Flux Control Variables
+//////////////// Fluxo Lógico ////////////////////
 boolean newMsg = false;
 boolean newResp = false;
 
-//Control Variables
-byte lastOrder = 0x08;
+////////// Movimento /////////////////////////////
+byte lastOrder = 0x08; //byte relacionado ao movimento STOP
 int deltaTime = 1000; //milliseconds
 unsigned long tLim = 1000000000;
 unsigned long tLastConnect = 1000000000;
 unsigned long tic;
 
-//Message variables
+/////////// Protocolo ////////////////////////////
 byte priorityMsg = 0xE0;  //Default value (reserved in protocol)
 byte msgData;
 byte infoCycle [] = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x18};
 int iInfo = 0;
-
-//Response variables
 byte resp[8];
-
-// Protocol Variables
 byte headByte = 0xFD;
 byte endByte = 0xFE;
 
-// Relays variables
+//////////// Relés ///////////////////////////////
 boolean rel[] = {false, false, false, false};
-//boolean relA = false; // true=Vcc, false=Gnd
-//boolean relB = false;
-//boolean relC = false;
-//boolean relD = false;
-
-// Pinos do relé  = (4 (data) e 5 (clock))
-SerialRelay relay(4,5,1); // (data, clock, number of modules)
-
-// Pino do sensor de tensão:
-int AnalogPin = 0;
+SerialRelay relay(relayDataPin, relayClockPin, 1); // data; clock; number of modules=1
 
 void setup() {
 
 
-  // Inicializando serial
-  delay(1000); //espera 0,2 segundos para estabilizar conexao
-
-  Serial.begin(9600); // Debugging
+  Serial.begin(9600); // Debugging                // Inicializando serial
   Serial.println("Init...");
 
-  // Inicializando internet
-  //Ethernet.begin(mac, ip, gateway, subnet); // initialize Ethernet device
-  Ethernet.begin(mac, ip, DNS, gateway, subnet); // initialize Ethernet device
-  //Ethernet.begin(mac, ip);
-  server.begin();           // start to listen for clients
+  Ethernet.begin(mac, ip, DNS, gateway, subnet);  // Inicializa a ethernet
+  server.begin();                                 // Inicializa o servidor
   Serial.println("Server ready");
-
-  // Inicializando acelerometro
-  accel.init();
-  Serial.println("Accelerometer ready");
-
-  if (!bmp.begin()){
-    Serial.println("BMP Failed");
-  }
-  Serial.println("BMP ready");
-
-  
-  // Inicializando pinos do relé
-  //Pinos do relé
-  relay.Info(&Serial,BIN); // for debugging
-  
-  //pinMode(pinRelA, OUTPUT);
-  //pinMode(pinRelB, OUTPUT);
-  //pinMode(pinRelC, OUTPUT);
-  //pinMode(pinRelD, OUTPUT);
-  Serial.println("Relays ready");
-
-  Serial.println("Setup Ready");
   Serial.print("IP: ");
   Serial.println(Ethernet.localIP());
+
+  relay.Info(&Serial,BIN);                        // "Inicializa" os relés
+  Serial.println("Relays ready");
+  
+  if (!bmp.begin()){                              // Inicializa o BMP
+    Serial.println("BMP Failed");                
+  } else {
+  Serial.println("BMP ready");
+  accel.init();                                   // Inicializa o Acelerometro (apenas se conseguir inicializar o BMP)
+  Serial.println("Accelerometer ready");
+  }
+  
+  Serial.println("Setup Ready");                  // Indica que o Setup acabou 
 }
 
 //FUNCAO PRINCIPAL QUE CONTROLA O FLUXO DO PROGRAMA (SEGUE POWER POINT)
@@ -209,15 +284,10 @@ void getControlResp() {
 void getAnalogicResp() {
 
   newResp = true;
-  int analogPin;
   int value;
   byte val1;
   byte val2;
 
-  //analogPin = int(msgData)-16;
-
-  //value = analogRead(analogPin);
-  
   switch (msgData) {
 
     // 0x10: ACCEL.X
@@ -259,8 +329,6 @@ void getAnalogicResp() {
       }
       break;
 
-
-
     // 0x13: Temperature
     case 0x13:
       //Precisao de 0.1ºC
@@ -294,19 +362,15 @@ void getAnalogicResp() {
       //Serial.println(" Pa");
       //Serial.print("Val: ");
       //Serial.println(String(val1) + " " + String(val2));
-      
       //Serial.println();
       break;
 
     //0x15: Battery     -------------  TODO
     case 0x15:
-    
-      value = analogRead(analogPin);
+      value = analogRead(analogBatVPin);
       //value = 1000;
       val1 = byte(value / 256);
-      val2 = byte(value % 256);
-      //Serial.println("Voltage value: ," + String(value));
-      
+      val2 = byte(value % 256);      
       break;
 
     //0x16: Light -    --------------- TODO
@@ -315,21 +379,27 @@ void getAnalogicResp() {
       val2 = 0xFF;
       break; 
 
-  
-    //0x16: Light +    --------------- TODO
+    //0x17: Light +    --------------- TODO
     case 0x17:
       val1 = 0xFF;
       val2 = 0xFF;
       break; 
-
     
-    //0x17: Light     ---------------- TODO
+    //0x18: Light     ---------------- TODO
     case 0x18:
       val1 = 0xFF;
       val2 = 0xFF;
       break; 
+   
+    //0x19: Battery     -------------  TODO
+    case 0x19:
+      value = analogRead(analogBatAPin);
+      val1 = byte(value / 256);
+      val2 = byte(value % 256);
+      //Serial.println("Current value: ," + String(value));
+     break;
+  
   }
-
 
   //CORRECAO DE BUG PARA val2 = endbyte:
   if (val2 == endByte){
@@ -365,7 +435,6 @@ void keepMoving() {
     lastOrder = 0x08;
     stopReles();
     priorityMsg = 0x08;
-    //Serial.println("Move time out!");
   }
 }
 
@@ -376,7 +445,6 @@ void setReles() {
   switch (msgData) {
     //UP
     case 0x00 :
-      Serial.println("Indo para frente!");
       updateRelay(1,true);
       updateRelay(2,false);
       updateRelay(3,true);
@@ -409,7 +477,6 @@ void setReles() {
 
     //DOWN
     case 0x04 :
-      Serial.println("Indo para Tras!");
       updateRelay(1,false);
       updateRelay(2,true);
       updateRelay(3,false);
@@ -475,7 +542,6 @@ void updateRelay(int numRelay, boolean ligar){
 
 void closeServer() {
   if ((millis() - tLastConnect) > 1000){
-    //Serial.println("Client Timeout!");
     client.stop();
   }
 }

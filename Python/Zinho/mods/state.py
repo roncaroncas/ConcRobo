@@ -19,7 +19,8 @@ class State():
 				
 				'temperature': 	-1, 		# ?C
 				'pressure':		-1, 		# Pa
-				'battery': 		-1,			# %
+				'batteryV': 		-1,			# %
+				'batteryA': 		-1,			# %
 
 				'distance':		dist,		#
 				'velocity': 	0,			# 
@@ -67,13 +68,13 @@ class State():
 				
 				b'\x13': {'pointTo': 'temperature',	'setter': 'ABK',			'A': 0.1, 		'B': 0., 	'K': 1.},			
 				b'\x14': {'pointTo': 'pressure',	'setter': 'ABK',			'A': 100., 		'B': 0., 	'K': 1.},	
-				b'\x15': {'pointTo': 'battery',		'setter': 'ABK',			'A': 0.028571, 	'B': 0., 	'K': .5},
+				b'\x15': {'pointTo': 'batteryV',		'setter': 'ABK',			'A': 0.028571, 	'B': 0., 	'K': .5},
 				
 				b'\x16': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca vai entrar nessa linha
 				b'\x17': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},  ### O programa nunca via entrar nessa linha
 				b'\x18': {'pointTo': 'light',		'setter': 'ABK',			'A': 1., 		'B': 0., 	'K': 1.},
 				
-				b'\x19': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': 0.},
+				b'\x19': {'pointTo': 'batteryA',	'setter': 'ABK',			'A': 30/2.5, 	'B': 2.5, 	'K': .5},
 				
 				b'\x20': {'pointTo': '?',			'setter': '?',				'A': 1., 		'B': 0., 	'K': .8},	
 			}
@@ -86,7 +87,8 @@ class State():
 		s += '\nDist, x0y0z0:          {:5.2f} {:5.2f} {:5.2f} {:5.2f}'.format(self.state['distance'], self.state['x0'], self.state['y0'], self.state['z0'])
 		s += '\nTemperature:           {:5.2f}'.format(self.state['temperature'])
 		s += '\nPressure:              {:5.2f}'.format(self.state['pressure'])
-		s += '\nBattery:               {:5.2f}'.format(self.state['battery'])
+		s += '\nBatteryV:               {:5.2f}'.format(self.state['batteryV'])
+		s += '\nBatteryA:               {:5.2f}'.format(self.state['batteryA'])
 
 		return s
 		
