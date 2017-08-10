@@ -5,7 +5,7 @@
 
 import json
 
-with open('../config.json') as jfile:
+with open('./config.json') as jfile:
             config = json.load(jfile)
 
 IP_ROUTER = config['IP_ROUTER']

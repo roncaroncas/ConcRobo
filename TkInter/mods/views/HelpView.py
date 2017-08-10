@@ -6,6 +6,7 @@ class HelpView(tk.Frame):
 	def __init__(self, parent, controller, gui):
 		tk.Frame.__init__(self, parent)
 		self.controller = controller
+		self.gui = gui
 
 		numColumns = 3
 		for i in range(numColumns):

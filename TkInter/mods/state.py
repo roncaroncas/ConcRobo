@@ -1,5 +1,6 @@
 from math import sin, cos, pi
 from time import time
+from .config import *
 #from mods.utils import *
 
 class State():

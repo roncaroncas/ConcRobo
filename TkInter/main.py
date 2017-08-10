@@ -1,8 +1,10 @@
 from mods.gui import GUI
 from mods.network import Ethernet, FakeConnect
 from mods.state import State
+from mods.config import *
 
 import os
+
 
 class Server:
 
@@ -11,7 +13,8 @@ class Server:
 		self.state = State(self)
 		self.gui = GUI(self)
 		self.conex = FakeConnect()
-		#self.config = ...
+
+		print(self.state)
 
 	######### REFRESH DO GUI
 	def updateGUI(self):
@@ -24,8 +27,7 @@ class Server:
 	def testConnection(self):
 
 		names = ["Router", "Zinho ", "CAM1   ", "CAM2   "]
-		IPs = ["192.168.0.1", "192.168.0.125", "192.168.0.110", "192.168.0.10"]
-
+		IPs = [IP_ROUTER, IP_ZINHO, IP_CAM1, IP_CAM2]
 		responses = []
 
 		for i in range (4):
@@ -34,45 +36,50 @@ class Server:
 			else:
 				responses.append(("{}\t{}\tFAIL").format(names[i], IPs[i]))
 
-		return (responses)
+		self.gui.frames['SetupConnectView'].t_p_router.set(responses[0])
+		self.gui.frames['SetupConnectView'].t_p_zinho.set(responses[1])
+		self.gui.frames['SetupConnectView'].t_p_cam1.set(responses[2])
+		self.gui.frames['SetupConnectView'].t_p_cam2.set(responses[3])
+
 
 	def getLastID(self):
 		''' Retorna o ultimo ID'''
 		
 		#TODO
-
-		return (1)
-
+		ID = 1
+		
+		self.gui.frames['SetupConnectView'].id.set("ID: {:04}".format(ID))
+		self.gui.frames['SetupConnectView'].e_id['state'] = "disabled"
+		
 	def getNewID(self):
 		'''Retorna o próximo ID livre'''
 		
 		#TODO
+		ID = 2
 
-		return (2)
+		self.gui.frames['SetupConnectView'].id.set("ID: {:04}".format(ID))
+		self.gui.frames['SetupConnectView'].e_id['state'] = "disabled"
 
-	def connect(self, ID):
+	def customID(self):
+		self.gui.frames['SetupConnectView'].e_id['state'] = "normal"
+		
+	def connect(self):
 		'''Tenta conectar com o Zinho e retorna True se conseguiu, False se não conseguiu
 		Além disso, cria-se um database com o referido id
 		'''
 
 		#TODO
 
-		return True
+		ID = self.gui.frames['SetupConnectView'].id.get()
+		
+		success = True
+		if success:
+			self.gui.show_frame("ConnectView")
+		else:
+			self.gui.show_frame("StartView")
 
 
 	#### Advanced
-
-	def addOne(self):
-		self.state.n += 1
-		print(self.state)
-
-class State:
-	def __init__(self, server):
-		self.n = 0
-		self.server = server
-
-	def __str__(self):
-		return(str(self.n))
 
 
 if __name__ == "__main__":

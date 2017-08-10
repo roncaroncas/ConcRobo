@@ -11,112 +11,89 @@ class SetupConnectView(tk.Frame):
 		numColumns = 4
 		for i in range(numColumns):
 			self.columnconfigure(i, weight=1)
-			self.columnconfigure(i, minsize=25)
 
+		self.columnconfigure(1,minsize=120)
+		self.columnconfigure(2,minsize=120)
+			
 
 		title_label = tk.Label(self, text="Connection Setup", font=gui.h1_font, borderwidth=2, relief="groove")
-		title_label.grid(column=0, columnspan=4, sticky="WENS", padx=5, pady=10, ipadx=5, ipady=10)
+		title_label.grid(self.gui.h1_pad, column=0, columnspan=4, sticky="WENS")
 
 
 		#### TEST CONNECTION #####
 
 		test_conn_label = tk.Label(self, text="Connection Test", font=gui.h2_font, borderwidth=2, relief="groove")
-		test_conn_label.grid(column=0, columnspan=4, sticky="WENS", padx=5, pady=5)
+		test_conn_label.grid(self.gui.h2_pad, column=0, columnspan=4, sticky="WENS")
 		
 		self.t_p_router = tk.StringVar()
 		self.t_p_router.set("Roteador	: -----")
 		e = tk.Label(self, textvariable=self.t_p_router, font=gui.p_font, borderwidth=2, relief="groove")
-		e.grid(column=1, columnspan=2, sticky="WENS", padx=5, pady=3)
+		e.grid(self.gui.p_pad, column=1, columnspan=2, sticky="WENS")
 
 		self.t_p_zinho = tk.StringVar()
 		self.t_p_zinho.set("Zinho 	: -----")
 		e = tk.Label(self, textvariable=self.t_p_zinho, font=gui.p_font, borderwidth=2, relief="groove")
-		e.grid(column=1, columnspan=2, sticky="WENS", padx=5, pady=3)
+		e.grid(self.gui.p_pad, column=1, columnspan=2, sticky="WENS")
 
 		self.t_p_cam1 = tk.StringVar()
 		self.t_p_cam1.set("CAM1 	: -----")
 		e = tk.Label(self, textvariable=self.t_p_cam1, font=gui.p_font, borderwidth=2, relief="groove")
-		e.grid(column=1, columnspan=2, sticky="WENS", padx=5, pady=3)
+		e.grid(self.gui.p_pad, column=1, columnspan=2, sticky="WENS")
 
 		self.t_p_cam2 = tk.StringVar()
 		self.t_p_cam2.set("CAM2 	: -----")
 		e = tk.Label(self, textvariable=self.t_p_cam2, font=gui.p_font, borderwidth=2, relief="groove")
-		e.grid(column=1, columnspan=2, sticky="WENS", padx=5, pady=3)
+		e.grid(self.gui.p_pad, column=1, columnspan=2, sticky="WENS")
 
 		b_ping = tk.Button(self, text="Test Connection",
-						   command=self.testConnection)
-		b_ping.grid(column=1, columnspan=2, sticky="WENS", padx=5, pady=5)
+						   command=self.controller.testConnection)
+		b_ping.grid(self.gui.button_pad, column=1, columnspan=2, sticky="WENS")
 
 
 		#### ID #####
 
 		id_label = tk.Label(self, text="ID Selection", font=gui.h2_font, borderwidth=2, relief="groove")
-		id_label.grid(column=0, columnspan=4, sticky="WENS", padx=5, pady=5)
+		id_label.grid(self.gui.h2_pad, column=0, columnspan=4, sticky="WENS")
+
+		
+		self.id = tk.StringVar()
+		self.id.set('ID ----')
+
+		t_id = tk.Label(self, textvariable=self.id, font=gui.p_font, borderwidth=2, relief="groove")
+		t_id.grid(self.gui.p_pad, rowspan=1, column=1, columnspan=2, sticky="WENS")
 		
 		_, row = self.grid_size()
 
 		self.radio = tk.IntVar()
-		b = tk.Radiobutton(self, text="Nova Rota", variable=self.radio, value=1, font=gui.p_font, command=self.getNewID)
-		b.grid(column=1, columnspan=1, sticky="W", padx=5, pady=5)
 
-		b = tk.Radiobutton(self, text="Ultima Rota", variable=self.radio, value=2, font=gui.p_font, command=self.getLastID)
-		b.grid(column=1, columnspan=1, sticky="W", padx=5, pady=5)
+		b = tk.Radiobutton(self, text="Ultima Rota", variable=self.radio, value=1, font=gui.p_font, command=self.controller.getLastID)
+		b.grid(self.gui.p_pad, column=1, columnspan=1, sticky="W")
 
-		b = tk.Radiobutton(self, text="Escolher Rota", variable=self.radio, value=3, font=gui.p_font, command=self.customID)
-		b.grid(column=1, columnspan=1, sticky="W", padx=5, pady=5)
+		b = tk.Radiobutton(self, text="Nova Rota", variable=self.radio, value=2, font=gui.p_font, command=self.controller.getNewID)
+		b.grid(self.gui.p_pad, column=1, columnspan=1, sticky="W")
+
+		b = tk.Radiobutton(self, text="Escolher Rota", variable=self.radio, value=3, font=gui.p_font, command=self.controller.customID)
+		b.grid(self.gui.p_pad, column=1, columnspan=1, sticky="W")
 
 		# t_id = tk.Label(self, text="Custom ID", borderwidth=2, font=gui.p_font, relief="groove")
-		# t_id.grid(column=1, sticky="WENS", padx=5, pady=5)
+		# t_id.grid(column=1, sticky="WENS")
 		
 		self.e_id = tk.Entry(self, text="Custom ID", width=3, font=gui.p_font, borderwidth=2, relief="groove", state="disabled")
-		self.e_id.grid(row=row+2,column=2, sticky="WENS", padx=5, pady=5)
+		self.e_id.grid(self.gui.p_pad, row=row+2,column=2, sticky="WENS")
 		
-
-		self.id = tk.StringVar()
-		self.id.set('ID ???')
-
-		t_id = tk.Label(self, textvariable=self.id, font=gui.p_font, borderwidth=2, relief="groove")
-		t_id.grid(row=row, rowspan=2, column=2, sticky="WENS", padx=5, pady=5)
 		
 		##################
 
 		_, row = self.grid_size()
 
 		b_connec = tk.Button(self, text="Conectar",
-						   command=self.connect)
-		b_connec.grid(row=row, column=1, sticky="WENS", padx=5, pady=5)
+						   command=self.controller.connect)
+		b_connec.grid(self.gui.button_pad, row=row, column=1, sticky="WENS")
 
 
 		b_back = tk.Button(self, text="Voltar",
 						   command=lambda: gui.show_frame("StartView"))
-		b_back.grid(row=row, column=2, sticky="WENS", padx=5, pady=5)
-
-	def testConnection(self):
-		a, b, c, d = self.controller.testConnection()
-		self.t_p_router.set(a)
-		self.t_p_zinho.set(b)
-		self.t_p_cam1.set(c)
-		self.t_p_cam2.set(d)
-
-	def getLastID(self):
-		self.id.set("ID: {}".format(self.controller.getLastID()))
-		self.e_id['state'] = "disabled"
-
-	def getNewID(self):
-		self.id.set("ID: {}".format(self.controller.getNewID()))
-		self.e_id['state'] = "disabled"
-		
-	def customID(self):
-		self.e_id['state'] = "normal"
-
-	def connect(self):
-
-		ID = self.id.get()
-		success = self.controller.connect(ID)
-		if success:
-			self.gui.show_frame("ConnectView")
-		else:
-			self.gui.show_frame("StartView")
+		b_back.grid(self.gui.button_pad, row=row, column=2, sticky="WENS")
 
 
 	def refreshFrame(self, state):

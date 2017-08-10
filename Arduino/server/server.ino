@@ -108,8 +108,8 @@ int relayDataPin = 4;
 int relayClockPin = 5;
 
 ///////////////// Pinos Analogicos ///////////////
-int analogBatAPin = 1;   //Amostragem de corrente
-int analogBatVPin = 2;   //Amostragem de tensão
+int analogBatAPin = 4;   //Amostragem de corrente
+int analogBatVPin = 3;   //Amostragem de tensão
 
 
 //------------------------DECLARAÇÃO DE VARIÁVEIS -----------------------------//

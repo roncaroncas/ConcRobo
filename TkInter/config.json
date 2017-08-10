@@ -1,0 +1,38 @@
+{
+
+	"IP_ROUTER": "192.168.0.1",
+
+	"IP_ZINHO": "192.168.0.125",
+	"PORT_ZINHO": 30,
+
+	"IP_CAM1": "192.168.0.10",
+	"PORT_CAM1": 30,
+
+	"IP_CAM2": "192.168.0.110",
+	"PORT_CAM2": 30,
+	
+	"KEYS": {
+		"UP_LEFT" : 113,
+		"UP" : 119,
+		"UP_RIGHT" : 101,
+		"LEFT" : 97,
+		"STOP" : 115, 
+		"RIGHT" : 100,
+		"DOWN_LEFT" : 122,
+		"DOWN" : 120,
+		"DOWN_RIGHT" : 99,	
+		"ESCAPE": 27
+	},
+	
+	"comment_CONEX": "Conext must be OFFLINE or ETHERNET",
+	"CONEX": "OFFLINE",
+	
+	"comment_movConstants": "R é RETO, D é DIAGONAL, L é LATERAL; V é velocidade linear(m/s), W é velocidade angular(voltas/s)",
+	"Krv": 0.1125, 
+	"Krw": 0,
+	"Kdv": 0.06081,
+	"Kdw": 0.03226,
+	"Klv": 0,
+	"Klw": 0.06427	
+	
+}

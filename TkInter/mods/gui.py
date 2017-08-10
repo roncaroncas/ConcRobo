@@ -11,10 +11,16 @@ class GUI(tk.Tk):
 		self.server = server
 		
 		#Fonts
-		self.h1_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
-		self.h2_font = tkfont.Font(family='Helvetica', size=12, weight="bold", slant="italic")
-		self.p_font = tkfont.Font(family='Helvetica', size=10)
-		self.button_font = tkfont.Font(family='Helvetica', size=10, weight="bold")
+		self.h1_font = 		tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
+		self.h2_font = 		tkfont.Font(family='Helvetica', size=12, weight="bold", slant="italic")
+		self.p_font = 		tkfont.Font(family='Helvetica', size=10)
+		self.button_font = 	tkfont.Font(family='Helvetica', size=10, weight="bold")
+
+		self.h1_pad = 		{'padx':5, 'pady':10, 	'ipadx':5, 'ipady':10}
+		self.h2_pad = 		{'padx':5, 'pady':5, 	'ipadx':2, 'ipady':2}
+		self.p_pad = 		{'padx':5, 'pady':3, 	'ipadx':2, 'ipady':2}
+		self.button_pad = 	{'padx':5, 'pady':5, 	'ipadx':2, 'ipady':2}
+
 
 		#Frames
 		container = tk.Frame()
@@ -35,9 +41,6 @@ class GUI(tk.Tk):
 	def show_frame(self, page_name):
 		'''Show a frame for the given page name'''
 		frame = self.frames[page_name]
-		width = frame.winfo_width()
-		height = frame.winfo_height()
-		print(width,height)
 		frame.tkraise()
 
 
