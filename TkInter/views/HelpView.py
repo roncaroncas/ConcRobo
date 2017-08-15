@@ -12,8 +12,11 @@ class HelpView(tk.Frame):
 		for i in range(numColumns):
 			self.columnconfigure(i, weight=1)
 
+		self.draw()
 
-		label_title = tk.Label(self, text="Instruções", font=gui.h1_font)
+
+	def draw(self):
+		label_title = tk.Label(self, text="Instruções", font=self.gui.h1_font)
 		label_title.grid(row=0,column=1)
 		
 		text = ("Para mover, use as teclas:\n"
@@ -41,12 +44,9 @@ class HelpView(tk.Frame):
 			" - baixo    (-) ~ cima    (+)\n"
 			 )
 			
-		label = tk.Label(self, text=text, font=gui.p_font, justify="left")
+		label = tk.Label(self, text=text, font=self.gui.p_font, justify="left")
 		label.grid(row=1,column=1)
 		
 		button = tk.Button(self, text="Voltar",
-						   command=lambda: gui.show_frame("StartView"))
+						   command=lambda: self.gui.show_frame("Start"))
 		button.grid(row=2,column=1)
-
-	def refreshFrame(self, state):
-		pass

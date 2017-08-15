@@ -1,91 +1,69 @@
-from mods.gui import GUI
+from controller import Controller
+from views import GUI
 from mods.network import Ethernet, FakeConnect
-from mods.state import State
+from mods.model import Model
+from mods.database import DataBase
 from mods.config import *
+
+from os import path, makedirs, listdir
+
+import tkinter as tk
+from tkinter import messagebox
 
 import os
 
 
 class Server:
 
-	######## SETUP
+	##################### SETUP ###################
+
 	def __init__(self):
-		self.state = State(self)
+		self.controller = Controller(self)
 		self.gui = GUI(self)
 		self.conex = FakeConnect()
+		self.model = Model()
+		self.db = None
 
-		print(self.state)
+		#variavel de fluxo
+		self.writeTurn = True
 
-	######### REFRESH DO GUI
+		#Cria pasta de Percursos caso ela nao exista
+		if not(path.isdir('./percursos')):
+			makedirs('./percursos')
+
+	def __str__(self):
+		return str(self.model)
+
+	def createDB(self):
+		self.db = DataBase(self.model.state['id'])
+
+	def createModel(self):
+		#Pega os parâmetros do Db criado
+		p = self.db.params() #[id, x, y, z, alph, dist, perc]		
+		self.model = Model(p[0], p[1], p[2], p[3], p[4], p[5], p[6])
+			
+
+	##################### UPDATE ##################
+
+	#update Database	
+	def updateDB(self):
+		pass
+
+	#update Model
+	def updateModel(self):
+		pass
+
+	#update GUI
 	def updateGUI(self):
-		self.gui.update(self.state)
-
-	######### CONTROLLERS
-
-	#### CONNECTION SETUP:
-
-	def testConnection(self):
-
-		names = ["Router", "Zinho ", "CAM1   ", "CAM2   "]
-		IPs = [IP_ROUTER, IP_ZINHO, IP_CAM1, IP_CAM2]
-		responses = []
-
-		for i in range (4):
-			if os.system("ping -n 1 -w 20 {}".format(IPs[i])) == 0:
-				responses.append(("{}\t{}\tOK!").format(names[i], IPs[i]))
-			else:
-				responses.append(("{}\t{}\tFAIL").format(names[i], IPs[i]))
-
-		self.gui.frames['SetupConnectView'].t_p_router.set(responses[0])
-		self.gui.frames['SetupConnectView'].t_p_zinho.set(responses[1])
-		self.gui.frames['SetupConnectView'].t_p_cam1.set(responses[2])
-		self.gui.frames['SetupConnectView'].t_p_cam2.set(responses[3])
-
-
-	def getLastID(self):
-		''' Retorna o ultimo ID'''
-		
-		#TODO
-		ID = 1
-		
-		self.gui.frames['SetupConnectView'].id.set("ID: {:04}".format(ID))
-		self.gui.frames['SetupConnectView'].e_id['state'] = "disabled"
-		
-	def getNewID(self):
-		'''Retorna o próximo ID livre'''
-		
-		#TODO
-		ID = 2
-
-		self.gui.frames['SetupConnectView'].id.set("ID: {:04}".format(ID))
-		self.gui.frames['SetupConnectView'].e_id['state'] = "disabled"
-
-	def customID(self):
-		self.gui.frames['SetupConnectView'].e_id['state'] = "normal"
-		
-	def connect(self):
-		'''Tenta conectar com o Zinho e retorna True se conseguiu, False se não conseguiu
-		Além disso, cria-se um database com o referido id
-		'''
-
-		#TODO
-
-		ID = self.gui.frames['SetupConnectView'].id.get()
-		
-		success = True
-		if success:
-			self.gui.show_frame("ConnectView")
-		else:
-			self.gui.show_frame("StartView")
-
-
-	#### Advanced
+		self.gui.refreshAll(self.model)
 
 
 if __name__ == "__main__":
 	zinho = Server()
 
 	while True:
-		zinho.gui.refresh(zinho.state)
+		zinho.updateDB()
+		zinho.updateModel()
+		zinho.updateGUI()
 		zinho.gui.update_idletasks()
 		zinho.gui.update()

@@ -3,8 +3,8 @@ from time import time
 from .config import *
 #from mods.utils import *
 
-class State():
-	def __init__(self, id=0, x0=0, y0=0, z0=0, alpha=90, dist=0, perc=[(0,0,"init")]):
+class Model():
+	def __init__(self, id="0000", x0=0, y0=0, z0=0, alpha=90, dist=0, perc=[(0,0,"init")]):
 	
 		self.t = time()
 				
@@ -20,7 +20,8 @@ class State():
 				
 				'temperature': 	-1, 		# ?C
 				'pressure':		-1, 		# Pa
-				'battery': 		-1,			# %
+				'batteryV': 		-1,			# %
+				'batteryA': 		-1,			# %
 
 				'distance':		dist,		#
 				'velocity': 	0,			# 	
@@ -28,9 +29,9 @@ class State():
 				'alpha':		alpha,			# ?
 				'wVelocity':	0,
 				
-				'x0':   x0,
-				'y0':	y0,
-				'z0': 	z0,
+				'x':   x0,
+				'y':	y0,
+				'z': 	z0,
 				
 				'perc':			perc,
 				'zoom':			5,
@@ -80,7 +81,7 @@ class State():
 
 	def __str__(self):
 	
-		s = 'State ID:{}\n'.format(self.state['id'])
+		s = '\nState ID:{}'.format(self.state['id'])
 		s += '\nLast Move:        	' + self.state['lastMove']
 		s += '\nAccel X, Y, Z:         {:5.2f} {:5.2f} {:5.2f}'.format(self.state['accelX'], self.state['accelY'], self.state['accelZ']) 
 		s += '\nDist, x0y0z0:          {:5.2f} {:5.2f} {:5.2f} {:5.2f}'.format(self.state['distance'], self.state['x0'], self.state['y0'], self.state['z0'])
