@@ -1,4 +1,4 @@
-from mods.config import *
+from config import *
 from os import path, makedirs, listdir, system
 
 import tkinter as tk
@@ -10,10 +10,13 @@ class SetupConnectController:
 		self.name = self.__class__.__name__.split("Controller")[0]
 
 	def key(self, event):
-		print ("clicked at", event.x, event.y)
+		print ("pressed", repr(event.char))
+
+	def keyRelease(self, event):
+		print ("unpressed", repr(event.char))
 
 	def mouse(self, event):
-		print ("pressed", repr(event.char))
+		print ("clicked at", event.x, event.y)
 
 	def refresh(self, state):
 		frame = self.server.gui.frames[self.name]
@@ -92,34 +95,38 @@ class SetupConnectController:
 			tk.messagebox.showinfo("Erro", "Selecione um ID!")
 			return
 
+		if self.server.gui.frames['SetupConnect'].var_id.get()[-5:] == '10000':
+			tk.messagebox.showinfo("Erro", "Esvazie a pasta dos percursos!\nDica: Copie e Salve em outro lugar!")
+			return
+
 		id = self.server.gui.frames['SetupConnect'].var_id.get()[-4:]
-		self.server.model.state['id'] = id
+		self.server.models['User'].__init__()
+		self.server.models['User']['id'] = id
+
 
 		if id == '0000':
 			tk.messagebox.showinfo("Erro", "O ID não pode ser 0000!")
 			return
 
 		self.server.gui.frames['SetupConnect'].var_connect.set('Conectando...')
-		self.server.gui.refreshAll(self.server.model)
+		self.server.gui.refreshAll(self.server.models['Zinho'])
 		
 		#tenta conectar
-		success = self.server.conex.connect()
-
-		print(success)
+		self.server.conex.connect()
 
 		#Se conectou com sucesso
-		if success:
+		if self.server.conex.connected:
 
 			self.server.gui.frames['SetupConnect'].var_radio.set(1)
 			self.server.gui.frames['SetupConnect'].var_connect.set('Conectar')
 
 
 			#Tenta criar um novo db (podendo aproveitar um antigo se necessário)
-			self.server.createDB()
+			self.server.initDB()
 			
-			if not(self.server.db.fail):
+			if not(self.server.db.csv['fail']):
 				#Pega os parâmetros do Db criado
-				self.server.createModel()
+				self.server.initZinho()
 				
 				#Muda de tela
 				self.server.gui.show_frame('Connect')

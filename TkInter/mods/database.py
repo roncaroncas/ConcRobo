@@ -5,12 +5,35 @@ from win32api import MessageBox
 
 class DataBase:
 	def __init__(self, id):
-		
-		self.deltaR = 0.05 #distancia minima entre dois pontos em metros
-		self.i = 0
-		self.initTime = time()
-		self.fail = False
-		
+
+		self.data = {
+			#Parametros fixos
+			'id':		id,
+			'initTime':	time(),
+
+			#Ultima linha
+			't':		.0,
+			'x':		.0,
+			'y':		.0,
+			'z':		.0,
+			'alpha':	90.0,
+			'dist':		.0,
+		}
+
+		self.config = {
+			'deltaR':	0.05, #distancia minima entre dois pontos em metros
+		}
+
+		self.csv = {
+			'file':		None,
+			'name':		None,
+			'fail':		False,
+		}
+
+		self._ = {
+			'i': 		0,
+		}
+
 		percursos = listdir('./percursos')
 		idExiste = False
 		for p in percursos:
@@ -18,56 +41,48 @@ class DataBase:
 				if (int(p.split('.csv')[0]) == int(id)):
 					idExiste = True
 
+		self.csv['name']	= "./percursos/"+ str(id) + ".csv"
+		
 		#SE O ID NAO EXISTE
-		if not(idExiste):
-		
-			self.fileName = "./percursos/"+ str(id) + ".csv"
-				
-			self.id = id
+		if not(idExiste):	
+			self.csv['file'] = open(self.csv['name'], 'x', newline = '')
+			self.csv['file'].write(';'.join(['t', 'x', 'y', 'z', 'alpha', 'dist', 'Flag'])+"\n")
+			self.csv['file'].write(';'.join(str(elem).replace('.', ',') for elem in [0, self['x'], self['y'], self['z'], self['alpha'], self['dist'], "init"])+"\n")
 			
-			self.x = 0
-			self.y = 0
-			self.z = 0
-			self.t = 0
-		
-			self.alpha = 90
-			self.dist = 0
-			
-			self.csvFile = open(self.fileName, 'x', newline = '')
-			self.csvFile.write(';'.join(['t', 'x', 'y', 'z', 'alpha', 'dist', 'Flag'])+"\n")
-			self.csvFile.write(';'.join(str(elem) for elem in [0, self.x, self.y, self.z, self.alpha, self.dist, "init"])+"\n")
-			
-				
 		#SE O ID EXISTE
 		else:		
-			self.id = id
-			
-			self.fileName = "./percursos/"+ str(id) + ".csv"
+
 			try:
-				self.csvFile = open(self.fileName, 'a', newline = '')
+				self.csv['file'] = open(self.csv['name'], 'a', newline = '')
 			except:
 				MessageBox(0, 'Feche o arquivo csv', 'Error')
-				self.fail = True
+				self.csv['fail'] = True
 				return
 				
-			p = self.params()
+			p = self.paramsFromFile()
 			
-			self.id = id
-			self.t = p[0]
-			self.x = p[1]
-			self.y = p[2]
-			self.z = p[3]
-			self.alpha = p[4]
-			self.dist = p[5]
-			self.csvFile.write(';'.join(str(elem).replace('.', ',') for elem in [0, self.x, self.y, self.z, self.alpha, self.dist, "init"])+"\n")
-					
-	def params(self):
+			self['x'] 		= p[0]
+			self['y'] 		= p[1]
+			self['z'] 		= p[2]
+			self['alpha'] 	= p[3]
+			self['dist'] 	= p[4]
+			self.csv['file'].write(';'.join(str(elem).replace('.', ',') for elem in [0, self['x'], self['y'], self['z'], self['alpha'], self['dist'], "init"])+"\n")
+
+	def __getitem__(self, key):
+		return(self.data[key])
+
+	def __setitem__(self, key, value):
+		if key in list(self.data.keys()):
+			self.data[key] = value
+		else:
+			print("!!!!!!!!!!!!!!!!There is no >>",key, "<< key!")
+			1/0
+
+	def paramsFromFile(self):
 		
-		perc = []
-		
-		self.csvFile.close()
+		self.csv['file'].close()
 	
-		with open(self.fileName, 'r') as percurso:
+		with open(self.csv['name'], 'r') as percurso:
 			row = percurso.readline().split(";") #header
 			
 			for row in percurso:
@@ -77,63 +92,59 @@ class DataBase:
 				z = round(float(row[3].replace(',', '.')),3)
 				alpha = round(float(row[4].replace(',', '.')),3)
 				dist = round(float(row[5].replace(',', '.')),3)
-				flag = row[6]
-				perc.append((x,y,flag))
-				
-		#if not(perc):
-		#	perc = [(0,0,"init")]
 
-		self.csvFile = open(self.fileName, 'a', newline = '')
+		self.csv['file'] = open(self.csv['name'], 'a', newline = '')
 							
-		return (self.id, x, y, z, alpha, dist, perc)
+		return (x, y, z, alpha, dist)
 	
-	def save (self,state):
-		t = time() - self.initTime
-		x = state.state['x0']
-		y = state.state['y0']
-		z = state.state['z0']
-		alpha = state.state['alpha']
-		dist = state.state['distance']
-		flag = state.state['flag']
+	def save (self, models):
 		
-	
-		if (((self.x-x)**2 + (self.y-y)**2 + (self.z-z)**2 > self.deltaR**2) or flag):
+		zinho = models['Zinho']
+		user = models['User']
+
+		t = time() - self['initTime']
+		x = zinho['x']
+		y = zinho['y']
+		z = zinho['z']
+		alpha = zinho['alpha']
+		dist = zinho['distance']
+
+		flag = user['flag']
+		
+		if (((self['x']-x)**2 + (self['y']-y)**2 + (self['z']-z)**2 > self.config['deltaR']**2) or flag):
 			
-			self.csvFile.write(';'.join(replaceDot2Comma([t,x,y,z,alpha,dist,str(flag)]))+"\n")
+			user['flag'] = ""
+
+			self.csv['file'].write(';'.join(replaceDot2Comma(["{:.1f}".format(t),x,y,z,alpha,dist,str(flag)]))+"\n")
 						
-			self.t = t
-			self.x = x
-			self.y = y
-			self.z = z
+			self['t'] = t
+			self['x'] = x
+			self['y'] = y
+			self['z'] = z
 			
-			self.alpha = alpha
-			self.dist = dist
+			self['alpha'] = alpha
+			self['dist'] = dist
 			
-			self.i += 1
-			if self.i%20 == 0:
-				self.backup()
-				
-			state.state['perc'].append((self.x,self.y,flag))
-			
-		return state
-		
+			self._['i'] += 1
+			if self._['i']%20 == 0:
+				self.backup()		
 	
 	def backup(self):
 		#fecha o csv, copia e reabre.
 	
-		self.csvFile.close()
+		self.csv['file'].close()
 		try:
-			shutil.copyfile(self.fileName, './percursos/backup.csv')  
+			shutil.copyfile(self.csv['name'], './percursos/backup.csv')  
 		except:
 			MessageBox(0, 'Feche o arquivo backup.csv\n(Não foi possível realizar o backup)', 'Error')
-		self.csvFile = open(self.fileName, 'a', newline='')
+		self.csv['file'] = open(self.csv['name'], 'a', newline='')
 		
 	def close(self):
-		self.csvFile.close()
+		self.csv['file'].close()
 		
 #Convete "." para "," nos floats para que o excel consiga plotar os gráficos 
 def replaceDot2Comma(row):
 		return [
-        str(el).replace('.', ',') if isinstance(el, float) else el 
-        for el in row
+		str(el).replace('.', ',') if isinstance(el, float) else el 
+		for el in row
 		]

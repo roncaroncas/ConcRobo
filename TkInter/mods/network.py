@@ -1,4 +1,7 @@
 import socket
+from .protocol import Message, Response
+from config import *
+
 #from config import IP_ZINHO, PORT_ZINHO
 #from config import HEADCHAR, ENDCHAR
 
@@ -54,39 +57,64 @@ import socket
 
 class Ethernet():
 
-	def __init__(self):
-		self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	def __init__(self, server):
+		self.server 				= server
+		self.sock 					= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.settimeout(5)
+		self.connected 				= False
+		self.msg 					= Message()
+		self.resp 					= Response()
 		
 	def connect(self):
+		
 		try:
+			
+			print('Connecting to {}:{} ...'.format(IP_ZINHO,PORT_ZINHO))
 			self.sock =	 socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.sock.settimeout(5)
-			print('Connecting to {}:{} ...'.format(IP_ZINHO,PORT_ZINHO))
+
 			self.sock.connect((IP_ZINHO, PORT_ZINHO))
+
 			print('Connected')
-			return True
+			self.connected = True
+
 		except:
+
 			print('Connection failed!')
-			return False
+			self.connected = False
 			
-		
 	def disconnect(self):
-		try:
-			print('Connection Closed!')
-			self.sock.close()
-			return True
-		except:
-			return False
-			
-	def sendMsg(self,msg):
-		try:
-			self.sock.sendall(msg)
-			return True
-		except:
-			return False
+
+		print('Connection Closed!')
+		self.sock.close()
+		self.connected = False
 		
-	def getResp(self):
+
+	def packMessage(self):
+		if self.server.writeTurn:
+			data = self.msg.key2data(self.server.models['User']['move'])
+			self.server.writeTurn = False
+		else:
+			data = self.msg.askRead()
+			self.server.writeTurn = True
+		return data
+
+	def sendMsg(self):
+
+		data = self.packMessage()
+
+		#print("SENDING: ",data)
+
+		try:
+			#print(data)
+			self.sock.sendall(data)
+
+			#print("SENT MSG SUCCESS!")
+		except:
+			self.connected = False
+			#print("SENT MSG FAIL!")
+
+	def unpackResp(self):
 		try:
 			i, j = b'', b''
 			resp = b''
@@ -97,32 +125,59 @@ class Ethernet():
 					resp = b'\xfd\xfd'
 				elif i == j == ENDCHAR:
 					resp += j
-					return (True, resp)
+					return (resp)
 				else:
 					resp += j
 				i = j
 		except:
-			return (False, False)
+			self.connected = False
+			return (None)
+
+	def rcvResp(self):
+		data = self.unpackResp()
+		#print("RESP RECEBIDA: ", data)
+		self.server.models['Zinho'].processRcvdResp(data)
+		
 		
 class FakeConnect():
 
-	def __init__(self):
-		self.fakeData = b'\x08';
+	def __init__(self, server):
+
+		self.server 				= server
+		self.connected 				= False
+		self.msg 					= Message()
+		self.resp 					= Response()
+
+		self.fakeData 				= b'\x08'
 		
 	def connect(self):
 		print('Fake Connected')
-		return True
+		self.connected = True
 		
 	def disconnect (self):
-		return True
+		self.connected = False
 
-	def sendMsg(self,msg):
-		#print("Sent fake msg")
-		if msg[1:2] < b'\x09':
-			self.fakeData = msg[1:2]
-		return True
-			 
-	def getResp(self):
-		return True, b'\xfd\xfd' +self.fakeData + b'\xfc\xfc'
-		#return True, b'\x00' + b'\xfc\xfc'
+	def packMessage(self):
+		if self.server.writeTurn:
+			data = self.msg.key2data(self.server.models['User']['move'])
+		else:
+			data = self.msg.askRead()
+		return data
+
+	def sendMsg(self):
+
+		data = self.packMessage()
+		print("MESSAGE ENVIADA: ", data)
+		if data[1:2] < b'\x09':
+			self.fakeData = data[1:2]
+
+	def unpackResp(self):
+		return b'\xfd\xfd' + (self.fakeData + b'\xfc\xfc') + b'\xfe\xfe'
+		
+	def rcvResp(self):
+		data = self.unpackResp()
+		print("RESP RECEBIDA: ", data)
+		print("FAKE DATA: ", self.fakeData)
+
+		self.server.models['Zinho'].processRcvdResp(data)
 

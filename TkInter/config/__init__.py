@@ -2,7 +2,6 @@
 # Faz a "tradução" do .json para variáveis do python
 # Possui variáveis que não precisam ser alteradas pelo usuário
 
-
 import json
 
 with open('./config.json') as jfile:

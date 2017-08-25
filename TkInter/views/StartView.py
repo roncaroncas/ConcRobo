@@ -18,8 +18,6 @@ class StartView(tk.Frame):
 		self.images = self.loadImages(['start'])
 
 		#Setando as variaveis
-
-
 		#Label
 		self.varLb_logo = None
 	
