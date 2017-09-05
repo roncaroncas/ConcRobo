@@ -53,11 +53,11 @@ class Camera(object):
 
 #
 #cap = Camera("rtsp://192.168.0.110:34567/user=admin&amp;password=&amp.sdp")
-cap = Camera(0)
+cap = Camera('input.h264')
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
+out = cv2.VideoWriter('output.avi', fourcc, 25.0, (640,480))
 
 while(cap.isOpened()):
     frame = cap.get_frame()
