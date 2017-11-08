@@ -159,11 +159,15 @@ class Network():
 			#rcvResp
 			resp = self.readStream()
 
-			#decodeResp
-			name, value = self.decodeResp(resp)
+			if resp:
+				#decodeResp
+				name, value = self.decodeResp(resp)
 
-			#updateModel
-			self.client.models['Zinho'].updateModel(name, value)
+				#updateModel
+				self.client.models['Zinho'].updateModel(name, value)
+
+			else:
+				self.client.cont = False
 
 		# 	def decodeResp(self, data):
 		# self.client.models['Zinho'].processRcvdResp(data)
